@@ -23,5 +23,8 @@ desktop.ini
 *.so
 *.dylib
 
+# Downloaded artifacts
+/artifacts/
+
 # Logs
 *.log
