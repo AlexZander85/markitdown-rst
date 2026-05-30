@@ -25,13 +25,17 @@ This release focuses on fixing critical GUI bugs, adding real embedded fonts wit
 
 ### Downloads
 
-| Edition | Description | GUI | OCR | MD Preview | CLI | Approx. Size |
-|---------|-------------|:---:|:---:|:----------:|:---:|:---:|
-| **Full** | Complete functionality | ✅ | ✅ | ✅ | ✅ | ~25 MB |
-| **Light** | GUI + conversion, no OCR/preview | ✅ | ❌ | ❌ | ✅ | ~10 MB |
-| **CLI-only** | Command line only, OCR supported | ❌ | ✅ | ❌ | ✅ | ~18 MB |
-
-Each edition is available for **Linux**, **macOS**, and **Windows** (x86_64).
+| File | Edition | OS | Arch |
+|------|---------|----|------|
+| `markitdown-rst-full-linux-x64.tar.gz` | Full (GUI + OCR + Preview) | Linux | x86_64 |
+| `markitdown-rst-full-macos-x64.tar.gz` | Full | macOS | x86_64 |
+| `markitdown-rst-full-windows-x64.exe` | Full | Windows | x86_64 |
+| `markitdown-rst-light-linux-x64.tar.gz` | Light (GUI, no OCR) | Linux | x86_64 |
+| `markitdown-rst-light-macos-x64.tar.gz` | Light | macOS | x86_64 |
+| `markitdown-rst-light-windows-x64.exe` | Light | Windows | x86_64 |
+| `markitdown-cli-linux-x64.tar.gz` | CLI-only (OCR) | Linux | x86_64 |
+| `markitdown-cli-macos-x64.tar.gz` | CLI-only | macOS | x86_64 |
+| `markitdown-cli-windows-x64.exe` | CLI-only | Windows | x86_64 |
 
 ### Quick Start
 
