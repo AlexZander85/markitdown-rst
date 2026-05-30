@@ -1,4 +1,4 @@
-//! Main GUI application for MarkItDown-RS
+//! Main GUI application for MarkItDown-RST
 //!
 //! Features:
 //! - Multilingual UI (EN/RU/ZH)

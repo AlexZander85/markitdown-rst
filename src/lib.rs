@@ -1,4 +1,4 @@
-//! MarkItDown-RS — Multi-threaded Document-to-Markdown Converter Library
+//! MarkItDown-RST — Multi-threaded Document-to-Markdown Converter Library
 //!
 //! This library provides document conversion capabilities with multi-threaded
 //! batch processing, optional OCR support, and optional Markdown preview.

@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔄 MarkItDown-RS
+# 🔄 MarkItDown-RST
 
 **Многоформатный конвертер документов в Markdown с OCR и мультиязычным UI**
 
@@ -16,9 +16,9 @@
 
 ## 🇷🇺 Русский
 
-### Что такое MarkItDown-RS?
+### Что такое MarkItDown-RST?
 
-**MarkItDown-RS** — это высокопроизводительное десктоп-приложение на Rust, которое конвертирует документы 13+ форматов в чистый Markdown. Работает в десятки раз быстрее Python-аналогов благодаря многопоточной архитектуре на Tokio + Rayon, а встроенный Tesseract OCR распознаёт текст на изображениях прямо из коробки — без внешних зависимостей.
+**MarkItDown-RST** — это высокопроизводительное десктоп-приложение на Rust, которое конвертирует документы 13+ форматов в чистый Markdown. Работает в десятки раз быстрее Python-аналогов благодаря многопоточной архитектуре на Tokio + Rayon, а встроенный Tesseract OCR распознаёт текст на изображениях прямо из коробки — без внешних зависимостей.
 
 ### ✨ Ключевые возможности
 
@@ -121,7 +121,7 @@ cargo build --release --no-default-features --features gui
 ### 🏗️ Архитектура
 
 ```
-markitdown-rs/
+markitdown-rst/
 ├── src/
 │   ├── main.rs           # Точка входа GUI
 │   ├── bin/cli.rs        # CLI-интерфейс (clap)
@@ -186,9 +186,9 @@ MIT License — используйте свободно.
 
 ## 🇬🇧 English
 
-### What is MarkItDown-RS?
+### What is MarkItDown-RST?
 
-**MarkItDown-RS** is a high-performance Rust desktop application that converts 13+ document formats into clean Markdown. It runs dozens of times faster than Python alternatives thanks to a multithreaded Tokio + Rayon architecture, and the built-in Tesseract OCR recognizes text in images out of the box — no external dependencies required.
+**MarkItDown-RST** is a high-performance Rust desktop application that converts 13+ document formats into clean Markdown. It runs dozens of times faster than Python alternatives thanks to a multithreaded Tokio + Rayon architecture, and the built-in Tesseract OCR recognizes text in images out of the box — no external dependencies required.
 
 ### ✨ Key Features
 
@@ -291,7 +291,7 @@ cargo build --release --no-default-features --features gui
 ### 🏗️ Architecture
 
 ```
-markitdown-rs/
+markitdown-rst/
 ├── src/
 │   ├── main.rs           # GUI entry point
 │   ├── bin/cli.rs        # CLI interface (clap)
@@ -356,9 +356,9 @@ MIT License — use freely.
 
 ## 🇨🇳 中文
 
-### MarkItDown-RS 是什么？
+### MarkItDown-RST 是什么？
 
-**MarkItDown-RS** 是一款高性能 Rust 桌面应用程序，可将 13+ 种文档格式转换为整洁的 Markdown。得益于 Tokio + Rayon 多线程架构，其运行速度比 Python 替代方案快数十倍。内置 Tesseract OCR 可开箱即用地识别图像中的文字——无需外部依赖。
+**MarkItDown-RST** 是一款高性能 Rust 桌面应用程序，可将 13+ 种文档格式转换为整洁的 Markdown。得益于 Tokio + Rayon 多线程架构，其运行速度比 Python 替代方案快数十倍。内置 Tesseract OCR 可开箱即用地识别图像中的文字——无需外部依赖。
 
 ### ✨ 核心功能
 
@@ -461,7 +461,7 @@ cargo build --release --no-default-features --features gui
 ### 🏗️ 架构
 
 ```
-markitdown-rs/
+markitdown-rst/
 ├── src/
 │   ├── main.rs           # GUI 入口
 │   ├── bin/cli.rs        # CLI 界面 (clap)

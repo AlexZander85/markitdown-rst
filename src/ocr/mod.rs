@@ -353,7 +353,7 @@ mod tests {
     #[test]
     fn test_ensure_tessdata_creates_files() {
         // Use a temporary directory to avoid polluting the real data dir
-        let tmp = std::env::temp_dir().join("markitdown-rs-test-tessdata");
+        let tmp = std::env::temp_dir().join("markitdown-rst-test-tessdata");
         let _ = fs::create_dir_all(&tmp);
 
         // We test the logic indirectly; ensure_tessdata uses crate::utils::tessdata_dir()

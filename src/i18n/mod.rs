@@ -1,4 +1,4 @@
-//! Internationalization (i18n) support for the markitdown-rs GUI application.
+//! Internationalization (i18n) support for the MarkItDown-RST GUI application.
 //!
 //! Provides translated UI strings in English, Russian, and Chinese.
 
@@ -36,7 +36,7 @@ impl fmt::Display for Language {
 /// # Example
 ///
 /// ```ignore
-/// use markitdown_rs::i18n::{I18n, Language};
+/// use markitdown_rst::i18n::{I18n, Language};
 ///
 /// let mut i = I18n::default();        // English
 /// assert_eq!(i.convert(), "Convert");
@@ -76,7 +76,7 @@ impl I18n {
 
     /// App title (same in every language).
     pub fn app_title(&self) -> &'static str {
-        "MarkItDown-RS"
+        "MarkItDown-RST"
     }
 
     /// Subtitle beneath the app title.
@@ -507,9 +507,9 @@ mod tests {
         let en = I18n::new(Language::En);
         let ru = I18n::new(Language::Ru);
         let zh = I18n::new(Language::Zh);
-        assert_eq!(en.app_title(), "MarkItDown-RS");
-        assert_eq!(ru.app_title(), "MarkItDown-RS");
-        assert_eq!(zh.app_title(), "MarkItDown-RS");
+        assert_eq!(en.app_title(), "MarkItDown-RST");
+        assert_eq!(ru.app_title(), "MarkItDown-RST");
+        assert_eq!(zh.app_title(), "MarkItDown-RST");
     }
 
     #[test]

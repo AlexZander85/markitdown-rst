@@ -1,18 +1,18 @@
 [package]
-name = "markitdown-rs"
-version = "2.0.0"
+name = "markitdown-rst"
+version = "1.0.0"
 edition = "2021"
-authors = ["MarkItDown-RS Contributors"]
-description = "Multi-threaded document-to-markdown converter with OCR, multilingual UI, and MD viewer"
+authors = ["MarkItDown-RST Contributors"]
+description = "Multi-threaded document-to-markdown converter with OCR, multilingual UI, and MD viewer (MarkItDown-RST)"
 license = "MIT"
 rust-version = "1.70"
 
 [lib]
-name = "markitdown_rs"
+name = "markitdown_rst"
 path = "src/lib.rs"
 
 [[bin]]
-name = "markitdown-rs"
+name = "markitdown-rst"
 path = "src/main.rs"
 
 [[bin]]

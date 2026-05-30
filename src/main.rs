@@ -1,4 +1,4 @@
-//! MarkItDown-RS — Multi-threaded Document-to-Markdown Converter
+//! MarkItDown-RST — Multi-threaded Document-to-Markdown Converter
 //!
 //! A Rust rewrite of markitdown-gui with:
 //! - Multi-threaded batch processing (tokio + semaphore)

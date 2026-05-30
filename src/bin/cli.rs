@@ -1,4 +1,4 @@
-//! MarkItDown-RS CLI — Multi-threaded document-to-markdown converter
+//! MarkItDown-RST CLI — Multi-threaded document-to-markdown converter
 //!
 //! Light build: core document conversion only (no OCR, no preview)
 //! Full build: adds Tesseract OCR for images
@@ -9,18 +9,18 @@ use colored::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::path::PathBuf;
 
-use markitdown_rs::batch::BatchProcessor;
-use markitdown_rs::utils::{OutputFormat, collect_files, detect_format, format_size};
+use markitdown_rst::batch::BatchProcessor;
+use markitdown_rst::utils::{OutputFormat, collect_files, detect_format, format_size};
 
 #[cfg(feature = "ocr")]
-use markitdown_rs::ocr::{self, OcrLanguage};
+use markitdown_rst::ocr::{self, OcrLanguage};
 
 #[derive(Parser)]
 #[command(
-    name = "markitdown-rs",
+    name = "markitdown-rst",
     version,
     about = "Multi-threaded document-to-markdown converter",
-    long_about = "MarkItDown-RS converts documents to Markdown format with multi-threaded\n\
+    long_about = "MarkItDown-RST converts documents to Markdown format with multi-threaded\n\
                   batch processing. Full build adds OCR for images via Tesseract.\n\n\
                   Inspired by markitdown-gui, transmutation, and mdhero projects."
 )]
@@ -211,7 +211,7 @@ async fn run_command(cli: Cli) -> Result<()> {
             match ocr::ensure_tessdata(&all_langs) {
                 Ok(()) => {
                     for lang in &all_langs {
-                        let path = markitdown_rs::utils::tessdata_dir().join(lang.filename());
+                        let path = markitdown_rst::utils::tessdata_dir().join(lang.filename());
                         let size = std::fs::metadata(&path).map(|m| format_size(m.len())).unwrap_or_else(|_| "N/A".into());
                         println!("    {} ({}) - {}", lang, lang.tesseract_code(), size);
                     }
