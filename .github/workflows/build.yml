@@ -1,0 +1,102 @@
+name: Build Apps
+
+on: [push, workflow_dispatch]
+
+jobs:
+  release:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: markitdown-rs.exe
+            exe_name: markitdown-rs.exe
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: markitdown-rs
+            exe_name: markitdown-rs
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: markitdown-rs
+            exe_name: markitdown-rs
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libxcb1-dev \
+            libxcb-render0-dev \
+            libxcb-shape0-dev \
+            libxcb-xfixes0-dev \
+            libx11-dev \
+            libx11-xcb-dev \
+            libxrandr-dev \
+            libxi-dev \
+            libxcursor-dev \
+            libxdamage-dev \
+            libxfixes-dev \
+            libxinerama-dev \
+            libwayland-dev \
+            libgbm-dev \
+            libegl-dev \
+            libclang-dev \
+            libspeechd-dev \
+            libtesseract-dev \
+            libleptonica-dev
+
+      - name: Install macOS dependencies
+        if: matrix.os == 'macos-latest'
+        run: brew install tesseract leptonica
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ matrix.os }}-cargo-
+
+      - name: Build GUI (full features)
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Build CLI
+        run: cargo build --release --bin markitdown-cli --target ${{ matrix.target }}
+
+      - name: Rename binaries (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          copy target/${{ matrix.target }}/release/markitdown-rs.exe markitdown-gui-windows-x64.exe
+          copy target/${{ matrix.target }}/release/markitdown-cli.exe markitdown-cli-windows-x64.exe
+
+      - name: Rename binaries (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cp target/${{ matrix.target }}/release/markitdown-rs markitdown-gui-${{ matrix.os == 'ubuntu-latest' && 'linux' || 'macos' }}-x64
+          cp target/${{ matrix.target }}/release/markitdown-cli markitdown-cli-${{ matrix.os == 'ubuntu-latest' && 'linux' || 'macos' }}-x64
+
+      - name: Upload GUI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: markitdown-gui-${{ matrix.os == 'ubuntu-latest' && 'linux' || (matrix.os == 'macos-latest' && 'macos' || 'windows') }}-x64
+          path: |
+            markitdown-gui-*
+
+      - name: Upload CLI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: markitdown-cli-${{ matrix.os == 'ubuntu-latest' && 'linux' || (matrix.os == 'macos-latest' && 'macos' || 'windows') }}-x64
+          path: |
+            markitdown-cli-*

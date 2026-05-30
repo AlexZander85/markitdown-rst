@@ -1,0 +1,27 @@
+# Build output
+/target/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment
+.env
+.env.local
+
+# Binary releases
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Logs
+*.log
