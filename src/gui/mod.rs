@@ -11,7 +11,13 @@ use std::sync::Arc;
 /// Load the application icon from embedded PNG bytes
 fn load_icon() -> Option<egui::IconData> {
     let png_bytes = include_bytes!("../../assets/icon-256.png");
-    let img = image::load_from_memory(png_bytes).ok()?;
+    let img = match image::load_from_memory(png_bytes) {
+        Ok(img) => img,
+        Err(e) => {
+            tracing::warn!("Failed to load window icon: {e}");
+            return None;
+        }
+    };
     let img = img.resize(256, 256, image::imageops::FilterType::Lanczos3);
     let rgba = img.to_rgba8();
     let width = rgba.width();
@@ -48,5 +54,9 @@ pub fn run_gui() -> eframe::Result<()> {
             crate::gui::fonts::install(&cc.egui_ctx);
             Ok(Box::new(MarkItDownApp::new()))
         }),
-    )
+    ).map_err(|e| {
+        // Log the error — on Windows the panic hook will also show a MessageBox
+        tracing::error!("eframe error: {e}");
+        e
+    })
 }

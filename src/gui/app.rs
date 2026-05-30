@@ -287,15 +287,26 @@ impl MarkItDownApp {
         ui.horizontal_centered(|ui| {
             // App icon — cached in struct, loaded once (not every frame)
             let icon = self.app_icon.get_or_insert_with(|| {
-                let img = image::load_from_memory(include_bytes!("../../assets/icon-256.png"))
-                    .expect("failed to load app icon")
-                    .resize(28, 28, image::imageops::FilterType::Lanczos3);
-                let rgba = img.to_rgba8();
-                let color_image = egui::ColorImage::from_rgba_unmultiplied(
-                    [rgba.width() as usize, rgba.height() as usize],
-                    &rgba,
+                let default_tex = || ctx.load_texture(
+                    "app-icon",
+                    egui::ColorImage::from_rgba_unmultiplied([1, 1], &[255, 255, 255, 0]),
+                    egui::TextureOptions::LINEAR,
                 );
-                ctx.load_texture("app-icon", color_image, egui::TextureOptions::LINEAR)
+                match image::load_from_memory(include_bytes!("../../assets/icon-256.png")) {
+                    Ok(img) => {
+                        let img = img.resize(28, 28, image::imageops::FilterType::Lanczos3);
+                        let rgba = img.to_rgba8();
+                        let color_image = egui::ColorImage::from_rgba_unmultiplied(
+                            [rgba.width() as usize, rgba.height() as usize],
+                            &rgba,
+                        );
+                        ctx.load_texture("app-icon", color_image, egui::TextureOptions::LINEAR)
+                    }
+                    Err(e) => {
+                        tracing::warn!("Failed to load app icon: {e}");
+                        default_tex()
+                    }
+                }
             });
             ui.image(&*icon);
             ui.add_space(6.0);
@@ -689,7 +700,7 @@ impl MarkItDownApp {
                 match self.preview_tab {
                     PreviewTab::Rendered => {
                         // Rendered markdown using egui_commonmark — real rendering in egui
-                        let mut viewer = egui_commonmark::CommonMarkViewer::new();
+                        let viewer = egui_commonmark::CommonMarkViewer::new();
                         viewer.show(ui, &mut self.md_cache, &self.preview_text);
                     }
                     PreviewTab::Raw => {
