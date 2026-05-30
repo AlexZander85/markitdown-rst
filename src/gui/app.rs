@@ -319,8 +319,18 @@ impl MarkItDownApp {
     fn draw_topbar(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.add_space(8.0);
         ui.horizontal_centered(|ui| {
-            ui.label(egui::RichText::new("\u{1f4c4}").size(22.0)); // 📄
-            ui.add_space(4.0);
+            // App icon (loaded from embedded PNG)
+            if let Ok(icon) = image::load_from_memory(include_bytes!("../../assets/icon-256.png")) {
+                let icon = icon.resize(28, 28, image::imageops::FilterType::Lanczos3);
+                let rgba = icon.to_rgba8();
+                let color_image = egui::ColorImage::from_rgba_unmultiplied(
+                    [rgba.width() as usize, rgba.height() as usize],
+                    &rgba,
+                );
+                let texture = ctx.load_texture("app-icon", color_image, egui::TextureOptions::LINEAR);
+                ui.image(&texture);
+            }
+            ui.add_space(6.0);
             ui.label(egui::RichText::new("MarkItDown-RST").size(16.0).strong());
             ui.label(egui::RichText::new("\u{00b7} Document to Markdown")
                 .small().color(Theme::TEXT_DIM));

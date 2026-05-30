@@ -48,7 +48,7 @@ htmd = "0.1"
 pulldown-cmark = "0.13"
 comrak = { version = "0.29", default-features = false, optional = true }
 
-# Image processing (used by OCR)
+# Image processing (used by OCR and GUI icon)
 image = { version = "0.25", default-features = false, features = ["jpeg", "png"], optional = true }
 
 # File detection
@@ -97,7 +97,7 @@ parking_lot = "0.12"
 
 [features]
 default = ["gui", "ocr", "preview"]
-gui = []
+gui = ["image"]
 cli-only = []
 ocr = ["image"]
 preview = ["comrak", "open", "uuid"]
@@ -128,6 +128,10 @@ inherits = "release"
 opt-level = 3
 lto = "fat"
 codegen-units = 1
+
+# Windows icon embedding
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"
 
 [profile.dev]
 opt-level = 0
