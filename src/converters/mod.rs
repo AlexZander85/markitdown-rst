@@ -130,8 +130,27 @@ impl ConversionResult {
     }
 
     pub async fn save_to_file(&self, path: &Path) -> Result<()> {
-        let content = self.full_markdown();
-        tokio::fs::write(path, content).await?;
+        match self.output_format {
+            OutputFormat::Html { .. } => {
+                let html = crate::export::md_to_html::markdown_to_html(
+                    &self.full_markdown(),
+                    &self.output_format,
+                )?;
+                tokio::fs::write(path, html).await?;
+            }
+            OutputFormat::Docx => {
+                let title = self.metadata.title.as_deref();
+                let docx_bytes = crate::export::md_to_docx::markdown_to_docx(
+                    &self.full_markdown(),
+                    title,
+                )?;
+                tokio::fs::write(path, docx_bytes).await?;
+            }
+            OutputFormat::Markdown { .. } | OutputFormat::Json { .. } => {
+                let content = self.full_markdown();
+                tokio::fs::write(path, content).await?;
+            }
+        }
         Ok(())
     }
 

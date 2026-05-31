@@ -5,6 +5,7 @@
 //!
 //! # Features
 //! - Convert 15+ document formats to Markdown
+//! - Export Markdown to HTML and DOCX
 //! - Multi-threaded batch processing (tokio + semaphore)
 //! - OCR for images via Tesseract with embedded tessdata (eng/rus/chi_sim) — `ocr` feature
 //! - Beautiful Markdown preview with highlight.js, KaTeX, Mermaid — `preview` feature
@@ -12,6 +13,7 @@
 
 pub mod batch;
 pub mod converters;
+pub mod export;
 pub mod i18n;
 pub mod utils;
 

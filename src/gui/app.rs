@@ -456,6 +456,30 @@ impl MarkItDownApp {
             .small().color(Theme::TEXT_DIM));
         ui.add_space(8.0);
 
+        // Output format selector
+        ui.label(egui::RichText::new(self.i18n.output_format())
+            .small().color(Theme::TEXT_DIM));
+        let format_label = format!("{}", self.output_format);
+        egui::ComboBox::from_id_salt("output_format")
+            .selected_text(&format_label)
+            .show_ui(ui, |ui| {
+                ui.selectable_value(
+                    &mut self.output_format,
+                    OutputFormat::Markdown { split_pages: false, optimize_for_llm: true },
+                    "Markdown (.md)",
+                );
+                ui.selectable_value(
+                    &mut self.output_format,
+                    OutputFormat::Html { standalone: true, include_css: true },
+                    "HTML (.html)",
+                );
+                ui.selectable_value(
+                    &mut self.output_format,
+                    OutputFormat::Docx,
+                    "Word (.docx)",
+                );
+            });
+
         ui.add(egui::Slider::new(&mut self.parallel_jobs, 1..=64)
             .text(self.i18n.threads()));
         ui.checkbox(&mut self.save_combined, self.i18n.combined_output());
@@ -757,16 +781,41 @@ impl MarkItDownApp {
     }
 
     fn save_current_preview(&self) {
+        let ext = self.output_format.extension();
         if let Some(path) = rfd::FileDialog::new()
-            .add_filter("Markdown", &["md"])
+            .add_filter("Output", &[ext])
+            .add_filter("All Files", &["*"])
             .save_file()
         {
             let path = if path.extension().is_none() {
-                path.with_extension("md")
+                path.with_extension(ext)
             } else {
                 path
             };
-            let _ = std::fs::write(&path, &self.preview_text);
+            match self.output_format {
+                OutputFormat::Html { .. } => {
+                    if let Ok(html) = crate::export::md_to_html::markdown_to_html(
+                        &self.preview_text,
+                        &self.output_format,
+                    ) {
+                        let _ = std::fs::write(&path, html);
+                    }
+                }
+                OutputFormat::Docx => {
+                    let title = self.last_results.get(self.selected_preview)
+                        .and_then(|(p, _)| p.file_stem())
+                        .and_then(|s| s.to_str());
+                    if let Ok(docx_bytes) = crate::export::md_to_docx::markdown_to_docx(
+                        &self.preview_text,
+                        title,
+                    ) {
+                        let _ = std::fs::write(&path, docx_bytes);
+                    }
+                }
+                _ => {
+                    let _ = std::fs::write(&path, &self.preview_text);
+                }
+            }
         }
     }
 }

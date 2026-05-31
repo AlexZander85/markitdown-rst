@@ -85,6 +85,8 @@ impl InputFormat {
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum OutputFormat {
     Markdown { split_pages: bool, optimize_for_llm: bool },
+    Html { standalone: bool, include_css: bool },
+    Docx,
     Json { structured: bool, include_metadata: bool },
 }
 
@@ -93,6 +95,29 @@ impl Default for OutputFormat {
         OutputFormat::Markdown {
             split_pages: false,
             optimize_for_llm: true,
+        }
+    }
+}
+
+impl std::fmt::Display for OutputFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OutputFormat::Markdown { .. } => write!(f, "Markdown (.md)"),
+            OutputFormat::Html { .. } => write!(f, "HTML (.html)"),
+            OutputFormat::Docx => write!(f, "Word (.docx)"),
+            OutputFormat::Json { .. } => write!(f, "JSON (.json)"),
+        }
+    }
+}
+
+impl OutputFormat {
+    /// Get the file extension for this output format (without the dot)
+    pub fn extension(&self) -> &'static str {
+        match self {
+            OutputFormat::Markdown { .. } => "md",
+            OutputFormat::Html { .. } => "html",
+            OutputFormat::Docx => "docx",
+            OutputFormat::Json { .. } => "json",
         }
     }
 }

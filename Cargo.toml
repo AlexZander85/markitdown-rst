@@ -1,6 +1,6 @@
 [package]
 name = "mdrust"
-version = "1.2.3"
+version = "1.3.0"
 edition = "2021"
 authors = ["MDrust Contributors"]
 description = "Multi-threaded document-to-markdown converter with OCR, multilingual UI, and MD viewer"
@@ -46,7 +46,7 @@ htmd = "0.1"
 
 # Markdown rendering
 pulldown-cmark = "0.13"
-comrak = { version = "0.29", default-features = false, optional = true }
+comrak = { version = "0.29", default-features = false }
 
 # Image processing (used by OCR and GUI icon)
 image = { version = "0.25", default-features = false, features = ["jpeg", "png"], optional = true }
@@ -114,7 +114,7 @@ default = ["gui", "ocr", "preview"]
 gui = ["image", "egui_commonmark"]
 cli-only = []
 ocr = ["image"]
-preview = ["comrak", "open", "uuid"]
+preview = ["open", "uuid"]
 full = ["ocr", "preview"]
 light = []
 logs = ["dep:tracing-subscriber"]

@@ -210,6 +210,15 @@ impl I18n {
         }
     }
 
+    /// "Output Format" label.
+    pub fn output_format(&self) -> &'static str {
+        match self.lang {
+            Language::En => "Output Format",
+            Language::Ru => "\u{0424}\u{043e}\u{0440}\u{043c}\u{0430}\u{0442} \u{0432}\u{044b}\u{0432}\u{043e}\u{0434}\u{0430}",
+            Language::Zh => "\u{8f93}\u{51fa}\u{683c}\u{5f0f}",
+        }
+    }
+
     /// "Combined output" label.
     pub fn combined_output(&self) -> &'static str {
         match self.lang {

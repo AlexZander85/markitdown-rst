@@ -79,29 +79,88 @@ impl BatchResult {
         let output_dir = output_dir.as_ref();
         tokio::fs::create_dir_all(output_dir).await?;
 
-        if combined {
-            let combined_markdown: String = self
-                .successes
-                .iter()
-                .map(|(path, result)| {
-                    let filename = path
-                        .file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or("unknown");
-                    format!("# Source: {}\n\n{}", filename, result.full_markdown())
-                })
-                .collect::<Vec<_>>()
-                .join("\n\n---\n\n");
+        // Determine the output format from the first successful result
+        // (all results share the same format from BatchProcessor)
+        let output_format = self
+            .successes
+            .first()
+            .map(|(_, r)| r.output_format.clone())
+            .unwrap_or_default();
 
-            let output_path = output_dir.join("combined_output.md");
-            tokio::fs::write(&output_path, combined_markdown).await?;
+        let ext = output_format.extension();
+
+        if combined {
+            match &output_format {
+                OutputFormat::Html { .. } => {
+                    // For HTML combined output, create a single HTML file
+                    let combined_md: String = self
+                        .successes
+                        .iter()
+                        .map(|(path, result)| {
+                            let filename = path
+                                .file_name()
+                                .and_then(|n| n.to_str())
+                                .unwrap_or("unknown");
+                            format!("## Source: {}\n\n{}", filename, result.full_markdown())
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n\n---\n\n");
+
+                    let html = crate::export::md_to_html::markdown_to_html(
+                        &combined_md,
+                        &output_format,
+                    )?;
+                    let output_path = output_dir.join(format!("combined_output.{}", ext));
+                    tokio::fs::write(&output_path, html).await?;
+                }
+                OutputFormat::Docx => {
+                    // For DOCX, combine all markdown first, then convert once
+                    let combined_md: String = self
+                        .successes
+                        .iter()
+                        .map(|(path, result)| {
+                            let filename = path
+                                .file_name()
+                                .and_then(|n| n.to_str())
+                                .unwrap_or("unknown");
+                            format!("# Source: {}\n\n{}", filename, result.full_markdown())
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n\n---\n\n");
+
+                    let docx_bytes = crate::export::md_to_docx::markdown_to_docx(
+                        &combined_md,
+                        Some("MDrust Combined Output"),
+                    )?;
+                    let output_path = output_dir.join(format!("combined_output.{}", ext));
+                    tokio::fs::write(&output_path, docx_bytes).await?;
+                }
+                _ => {
+                    // Markdown / JSON — original behavior
+                    let combined_markdown: String = self
+                        .successes
+                        .iter()
+                        .map(|(path, result)| {
+                            let filename = path
+                                .file_name()
+                                .and_then(|n| n.to_str())
+                                .unwrap_or("unknown");
+                            format!("# Source: {}\n\n{}", filename, result.full_markdown())
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n\n---\n\n");
+
+                    let output_path = output_dir.join(format!("combined_output.{}", ext));
+                    tokio::fs::write(&output_path, combined_markdown).await?;
+                }
+            }
         } else {
             for (input_path, result) in &self.successes {
                 let filename = input_path
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("output");
-                let output_path = output_dir.join(format!("{}.md", filename));
+                let output_path = output_dir.join(format!("{}.{}", filename, ext));
                 result.save_to_file(&output_path).await?;
             }
         }
@@ -243,7 +302,10 @@ impl BatchProcessor {
 
         while let Some(joined) = tasks.next().await {
             match joined {
-                Ok(Some((path, Ok(conversion)))) => {
+                Ok(Some((path, Ok(mut conversion)))) => {
+                    // Override the output format — converters always produce Markdown internally,
+                    // but the desired export format is set by the BatchProcessor
+                    conversion.output_format = (*output_format).clone();
                     successes.push((path, conversion));
                 }
                 Ok(Some((path, Err(e)))) => {

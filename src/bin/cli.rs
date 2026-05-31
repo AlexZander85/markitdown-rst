@@ -39,7 +39,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Convert a single document to Markdown
+    /// Convert a single document
     Convert {
         #[arg(value_name = "INPUT")]
         input: PathBuf,
@@ -47,6 +47,9 @@ enum Commands {
         output: Option<PathBuf>,
         #[arg(short = 'l', long)]
         optimize_llm: bool,
+        #[arg(short = 'f', long, default_value = "md", value_name = "FORMAT")]
+        /// Output format: md, html, docx
+        format: String,
         #[cfg(feature = "ocr")]
         #[arg(short = 'L', long, value_delimiter = ',', default_value = "eng")]
         ocr_langs: Vec<String>,
@@ -64,6 +67,9 @@ enum Commands {
         combined: bool,
         #[arg(short, long)]
         continue_on_error: bool,
+        #[arg(short = 'f', long, default_value = "md", value_name = "FORMAT")]
+        /// Output format: md, html, docx
+        format: String,
         #[cfg(feature = "ocr")]
         #[arg(short = 'L', long, value_delimiter = ',', default_value = "eng")]
         ocr_langs: Vec<String>,
@@ -81,6 +87,16 @@ enum Commands {
     #[cfg(feature = "ocr")]
     /// Check OCR (Tesseract) availability
     OcrCheck,
+}
+
+/// Parse output format string
+fn parse_output_format(fmt: &str) -> OutputFormat {
+    match fmt.to_lowercase().as_str() {
+        "html" | "htm" => OutputFormat::Html { standalone: true, include_css: true },
+        "docx" | "doc" | "word" => OutputFormat::Docx,
+        "json" => OutputFormat::Json { structured: true, include_metadata: true },
+        _ => OutputFormat::Markdown { split_pages: false, optimize_for_llm: true },
+    }
 }
 
 #[cfg(feature = "ocr")]
@@ -125,24 +141,28 @@ async fn run_command(cli: Cli) -> Result<()> {
     match cli.command {
         // ── Convert ──────────────────────────────────────────────
         #[cfg(feature = "ocr")]
-        Commands::Convert { input, output, optimize_llm, ocr_langs } => {
+        Commands::Convert { input, output, optimize_llm, format, ocr_langs } => {
             let langs = parse_ocr_langs(&ocr_langs);
-            do_convert(&input, &output, optimize_llm, cli.quiet, &langs).await
+            let out_fmt = parse_output_format(&format);
+            do_convert(&input, &output, optimize_llm, cli.quiet, &langs, &out_fmt).await
         }
         #[cfg(not(feature = "ocr"))]
-        Commands::Convert { input, output, optimize_llm } => {
-            do_convert(&input, &output, optimize_llm, cli.quiet).await
+        Commands::Convert { input, output, optimize_llm, format } => {
+            let out_fmt = parse_output_format(&format);
+            do_convert(&input, &output, optimize_llm, cli.quiet, &out_fmt).await
         }
 
         // ── Batch ────────────────────────────────────────────────
         #[cfg(feature = "ocr")]
-        Commands::Batch { input, output, jobs, combined, continue_on_error: _, ocr_langs } => {
+        Commands::Batch { input, output, jobs, combined, continue_on_error: _, format, ocr_langs } => {
             let langs = parse_ocr_langs(&ocr_langs);
-            do_batch(&input, &output, jobs, combined, cli.quiet, &langs).await
+            let out_fmt = parse_output_format(&format);
+            do_batch(&input, &output, jobs, combined, cli.quiet, &langs, &out_fmt).await
         }
         #[cfg(not(feature = "ocr"))]
-        Commands::Batch { input, output, jobs, combined, continue_on_error: _ } => {
-            do_batch(&input, &output, jobs, combined, cli.quiet).await
+        Commands::Batch { input, output, jobs, combined, continue_on_error: _, format } => {
+            let out_fmt = parse_output_format(&format);
+            do_batch(&input, &output, jobs, combined, cli.quiet, &out_fmt).await
         }
 
         // ── Info ─────────────────────────────────────────────────
@@ -238,15 +258,15 @@ async fn run_command(cli: Cli) -> Result<()> {
 
 /// Single-file conversion — full build with OCR
 #[cfg(feature = "ocr")]
-async fn do_convert(input: &PathBuf, output: &Option<PathBuf>, optimize_llm: bool, quiet: bool, ocr_languages: &Vec<OcrLanguage>) -> Result<()> {
+async fn do_convert(input: &PathBuf, output: &Option<PathBuf>, optimize_llm: bool, quiet: bool, ocr_languages: &Vec<OcrLanguage>, output_format: &OutputFormat) -> Result<()> {
     if !input.exists() { anyhow::bail!("Input file not found: {}", input.display()); }
     if !quiet { println!("{}", "Converting document...".cyan().bold()); println!("  Input:  {}", input.display()); }
-    let output_path = output.clone().unwrap_or_else(|| { let mut p = input.clone(); p.set_extension("md"); p });
-    if !quiet { println!("  Output: {}", output_path.display()); }
-    let output_format = OutputFormat::Markdown { split_pages: false, optimize_for_llm: optimize_llm };
+    let ext = output_format.extension();
+    let output_path = output.clone().unwrap_or_else(|| { let mut p = input.clone(); p.set_extension(ext); p });
+    if !quiet { println!("  Output: {} ({})", output_path.display(), output_format); }
     let result = BatchProcessor::new()
         .add_paths(&[input.clone()])
-        .output_format(output_format)
+        .output_format(output_format.clone())
         .parallel(1)
         .ocr_languages(ocr_languages.clone())
         .execute().await?;
@@ -260,15 +280,15 @@ async fn do_convert(input: &PathBuf, output: &Option<PathBuf>, optimize_llm: boo
 
 /// Single-file conversion — light build without OCR
 #[cfg(not(feature = "ocr"))]
-async fn do_convert(input: &PathBuf, output: &Option<PathBuf>, optimize_llm: bool, quiet: bool) -> Result<()> {
+async fn do_convert(input: &PathBuf, output: &Option<PathBuf>, optimize_llm: bool, quiet: bool, output_format: &OutputFormat) -> Result<()> {
     if !input.exists() { anyhow::bail!("Input file not found: {}", input.display()); }
     if !quiet { println!("{}", "Converting document...".cyan().bold()); println!("  Input:  {}", input.display()); }
-    let output_path = output.clone().unwrap_or_else(|| { let mut p = input.clone(); p.set_extension("md"); p });
-    if !quiet { println!("  Output: {}", output_path.display()); }
-    let output_format = OutputFormat::Markdown { split_pages: false, optimize_for_llm: optimize_llm };
+    let ext = output_format.extension();
+    let output_path = output.clone().unwrap_or_else(|| { let mut p = input.clone(); p.set_extension(ext); p });
+    if !quiet { println!("  Output: {} ({})", output_path.display(), output_format); }
     let result = BatchProcessor::new()
         .add_paths(&[input.clone()])
-        .output_format(output_format)
+        .output_format(output_format.clone())
         .parallel(1)
         .execute().await?;
     if let Some((_, conversion)) = result.successes.first() {
@@ -281,15 +301,15 @@ async fn do_convert(input: &PathBuf, output: &Option<PathBuf>, optimize_llm: boo
 
 /// Batch conversion — full build with OCR
 #[cfg(feature = "ocr")]
-async fn do_batch(input: &[PathBuf], output: &PathBuf, jobs: Option<usize>, combined: bool, quiet: bool, ocr_languages: &Vec<OcrLanguage>) -> Result<()> {
+async fn do_batch(input: &[PathBuf], output: &PathBuf, jobs: Option<usize>, combined: bool, quiet: bool, ocr_languages: &Vec<OcrLanguage>, output_format: &OutputFormat) -> Result<()> {
     let parallel_jobs = jobs.unwrap_or_else(default_parallel_jobs);
-    if !quiet { println!("{}", "Batch converting documents...".cyan().bold()); println!("  Input:    {} paths", input.len()); println!("  Output:   {}", output.display()); println!("  Parallel: {} jobs", parallel_jobs); println!("  Combined: {}", if combined { "yes" } else { "no" }); println!(); }
+    if !quiet { println!("{}", "Batch converting documents...".cyan().bold()); println!("  Input:    {} paths", input.len()); println!("  Output:   {}", output.display()); println!("  Parallel: {} jobs", parallel_jobs); println!("  Format:   {}", output_format); println!("  Combined: {}", if combined { "yes" } else { "no" }); println!(); }
     let all_files = collect_files(input);
     let total = all_files.len();
     if total == 0 { if !quiet { println!("{}", "No supported files found.".yellow()); } return Ok(()); }
     if !quiet { println!("{}", format!("Found {} files:", total).green()); for f in &all_files { let fmt = detect_format(f); let sz = std::fs::metadata(f).map(|m| format_size(m.len())).unwrap_or_default(); let name = f.file_name().and_then(|n| n.to_str()).unwrap_or("?"); println!("  {} [{}] ({})", name, fmt, sz); } println!(); }
     let pb = if !quiet { let pb = ProgressBar::new(total as u64); pb.set_style(ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} ({eta})").unwrap().progress_chars("#>-")); Some(pb) } else { None };
-    let result = BatchProcessor::new().add_paths(input).output_format(OutputFormat::default()).parallel(parallel_jobs).ocr_languages(ocr_languages.clone()).execute().await?;
+    let result = BatchProcessor::new().add_paths(input).output_format(output_format.clone()).parallel(parallel_jobs).ocr_languages(ocr_languages.clone()).execute().await?;
     if let Some(pb) = &pb { pb.finish_with_message("done"); }
     result.save_all(output, combined).await?;
     if !quiet { println!(); println!("{}", "Batch conversion complete!".green().bold()); println!("  Success: {}/{} ({:.1}%)", result.successes.len(), result.total_files, result.success_rate()); if !result.failures.is_empty() { println!("  Failed:  {}", result.failures.len().to_string().red()); for (p, e) in &result.failures { println!("    {}: {}", p.file_name().and_then(|n| n.to_str()).unwrap_or("?"), e); } } println!("  Time:    {:.2}s", result.total_time_secs); println!("  Words:   {}", result.total_word_count()); println!("  Speed:   {:.1} files/s", result.successes.len() as f64 / result.total_time_secs.max(0.001)); println!("  Output:  {}", output.display()); }
@@ -298,15 +318,15 @@ async fn do_batch(input: &[PathBuf], output: &PathBuf, jobs: Option<usize>, comb
 
 /// Batch conversion — light build without OCR
 #[cfg(not(feature = "ocr"))]
-async fn do_batch(input: &[PathBuf], output: &PathBuf, jobs: Option<usize>, combined: bool, quiet: bool) -> Result<()> {
+async fn do_batch(input: &[PathBuf], output: &PathBuf, jobs: Option<usize>, combined: bool, quiet: bool, output_format: &OutputFormat) -> Result<()> {
     let parallel_jobs = jobs.unwrap_or_else(default_parallel_jobs);
-    if !quiet { println!("{}", "Batch converting documents...".cyan().bold()); println!("  Input:    {} paths", input.len()); println!("  Output:   {}", output.display()); println!("  Parallel: {} jobs", parallel_jobs); println!("  Combined: {}", if combined { "yes" } else { "no" }); println!(); }
+    if !quiet { println!("{}", "Batch converting documents...".cyan().bold()); println!("  Input:    {} paths", input.len()); println!("  Output:   {}", output.display()); println!("  Parallel: {} jobs", parallel_jobs); println!("  Format:   {}", output_format); println!("  Combined: {}", if combined { "yes" } else { "no" }); println!(); }
     let all_files = collect_files(input);
     let total = all_files.len();
     if total == 0 { if !quiet { println!("{}", "No supported files found.".yellow()); } return Ok(()); }
     if !quiet { println!("{}", format!("Found {} files:", total).green()); for f in &all_files { let fmt = detect_format(f); let sz = std::fs::metadata(f).map(|m| format_size(m.len())).unwrap_or_default(); let name = f.file_name().and_then(|n| n.to_str()).unwrap_or("?"); println!("  {} [{}] ({})", name, fmt, sz); } println!(); }
     let pb = if !quiet { let pb = ProgressBar::new(total as u64); pb.set_style(ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} ({eta})").unwrap().progress_chars("#>-")); Some(pb) } else { None };
-    let result = BatchProcessor::new().add_paths(input).output_format(OutputFormat::default()).parallel(parallel_jobs).execute().await?;
+    let result = BatchProcessor::new().add_paths(input).output_format(output_format.clone()).parallel(parallel_jobs).execute().await?;
     if let Some(pb) = &pb { pb.finish_with_message("done"); }
     result.save_all(output, combined).await?;
     if !quiet { println!(); println!("{}", "Batch conversion complete!".green().bold()); println!("  Success: {}/{} ({:.1}%)", result.successes.len(), result.total_files, result.success_rate()); if !result.failures.is_empty() { println!("  Failed:  {}", result.failures.len().to_string().red()); for (p, e) in &result.failures { println!("    {}: {}", p.file_name().and_then(|n| n.to_str()).unwrap_or("?"), e); } } println!("  Time:    {:.2}s", result.total_time_secs); println!("  Words:   {}", result.total_word_count()); println!("  Speed:   {:.1} files/s", result.successes.len() as f64 / result.total_time_secs.max(0.001)); println!("  Output:  {}", output.display()); }

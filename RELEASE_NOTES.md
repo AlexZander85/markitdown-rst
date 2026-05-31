@@ -1,13 +1,29 @@
-## MDrust v1.2.3 — Icon Fix, Chinese Font Fix, Theme Fix, OCR Message Fix
+## MDrust v1.3.0 — Reverse Conversion: MD → HTML & MD → DOCX
 
-This release fixes multiple UI issues reported after v1.2.2.
+This major feature release adds the ability to export converted Markdown to HTML and DOCX formats.
 
-### Bug Fixes
+### New Features
 
-- **Fixed squished app icon** — The source icon was 1536×1024 (not square), causing egui to display it compressed horizontally. The icon is now properly cropped to square (1024×1024 center crop) before resizing to 256×256. The Windows `.ico` file now includes 16/32/48/256 sizes instead of just 16×16.
-- **Fixed Chinese characters not displaying** — The previous `NotoSansSC-Regular.ttf` was a variable font (5.2MB with `fvar`/`gvar` tables) that egui's font parser couldn't handle. Replaced with a proper static TrueType font (10.5MB, 30,890 glyphs) from Google Fonts CDN. Chinese text now renders correctly in the language selector, OCR checkboxes, and throughout the UI.
-- **Fixed dark theme text invisible on first launch** — Sidebar labels (Output Dir, Threads, etc.) were nearly invisible on dark theme at startup, but fine after toggling theme. Cause: `Theme::apply()` was called before `fonts::install()`, but `ctx.set_fonts()` resets the style/visuals. Fixed by installing fonts first, then applying theme.
-- **Clarified Tesseract OCR message** — The status bar now explains that language data (tessdata) is embedded in MDrust, but the Tesseract binary must be installed separately. This is by design — embedding a C++ binary is not feasible, but the language packs (which are what users usually struggle with) are built-in.
+- **MD → HTML export** — Convert any document to a standalone HTML5 file with embedded CSS, auto dark/light mode, responsive layout, and professional typography. Uses `comrak` for rendering.
+- **MD → DOCX export** — Convert any document to a Microsoft Word (.docx) file with proper headings, bold/italic/strikethrough, code blocks, tables, lists, and blockquotes. Uses `pulldown-cmark` for parsing and `docx-rs` for writing.
+- **Output format selector in GUI** — New dropdown in the sidebar to choose between Markdown, HTML, and DOCX output formats.
+- **CLI `--format` flag** — New `-f/--format` option for `convert` and `batch` commands: `md`, `html`, or `docx`.
+
+### CLI Examples
+
+```bash
+# Convert PDF to HTML
+mdrust-cli convert document.pdf -f html
+
+# Convert DOCX to Word (re-export with MDrust formatting)
+mdrust-cli convert report.docx -f docx -o reformatted.docx
+
+# Batch convert to HTML
+mdrust-cli batch ./docs -f html -o ./html-output
+
+# Batch convert to Word
+mdrust-cli batch ./docs -f docx -o ./word-output --combined
+```
 
 ### Downloads
 
@@ -23,19 +39,6 @@ This release fixes multiple UI issues reported after v1.2.2.
 | `mdrust-cli-macos-x64.tar.gz` | CLI-only | macOS | x86_64 |
 | `mdrust-cli-windows-x64.exe` | CLI-only | Windows | x86_64 |
 
-### Quick Start
-
-```bash
-# GUI mode
-./mdrust
-
-# CLI: single file
-mdrust-cli convert document.pdf
-
-# CLI: batch with 8 threads
-mdrust-cli batch ./docs --threads 8 --output ./markdown
-```
-
 ---
 
-**Full Changelog**: https://github.com/AlexZander85/MDrust/compare/v1.2.2...v1.2.3
+**Full Changelog**: https://github.com/AlexZander85/MDrust/compare/v1.2.3...v1.3.0
