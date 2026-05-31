@@ -69,7 +69,8 @@ jobs:
             libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
             libx11-dev libx11-xcb-dev libxrandr-dev libxi-dev libxcursor-dev \
             libxdamage-dev libxfixes-dev libxinerama-dev libwayland-dev \
-            libgbm-dev libegl-dev libspeechd-dev
+            libgbm-dev libegl-dev libspeechd-dev \
+            liblzma-dev libclang-dev
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
