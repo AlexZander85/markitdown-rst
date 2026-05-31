@@ -85,7 +85,7 @@ fn text_to_markdown_with_meta(text: &str) -> (String, Option<String>, usize) {
             continue;
         }
 
-        word_count += trimmed.split_whitespace().count();
+        word_count += crate::utils::count_words(trimmed);
 
         let is_header = trimmed.len() < 80
             && !matches!(trimmed.as_bytes().last(), Some(b'.' | b',' | b';'))

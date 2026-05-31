@@ -19,9 +19,11 @@ use mdrust::ocr::{self, OcrLanguage};
 #[command(
     name = "mdrust",
     version,
-    about = "Multi-threaded document-to-markdown converter",
+    about = "Multi-threaded document-to-markdown converter with SIMD acceleration",
     long_about = "MDrust converts documents to Markdown format with multi-threaded\n\
-                  batch processing. Full build adds OCR for images via Tesseract.\n\n\
+                  batch processing and SIMD-accelerated parsing (AVX-512, AVX2, SSE4.2, NEON).\n\
+                  Full build adds OCR for images via Tesseract.\n\n\
+                  Use 'mdrust cpu-info' to check your CPU's SIMD capabilities.\n\n\
                   Inspired by markitdown-gui, transmutation, and mdhero projects."
 )]
 struct Cli {
@@ -83,6 +85,9 @@ enum Commands {
 
     /// List supported formats
     Formats,
+
+    /// Show CPU SIMD features and acceleration info
+    CpuInfo,
 
     #[cfg(feature = "ocr")]
     /// Check OCR (Tesseract) availability
@@ -219,6 +224,27 @@ async fn run_command(cli: Cli) -> Result<()> {
                 println!("{}", "Note: OCR not available in this light build.".yellow());
                 println!("  Install the full version for image OCR support.");
             }
+            Ok(())
+        }
+
+        // ── CPU Info ─────────────────────────────────────────────
+        Commands::CpuInfo => {
+            let cpu = mdrust::cpu::features();
+            println!("{}", "CPU SIMD Features".cyan().bold());
+            println!();
+            println!("{}", cpu.detailed_report());
+            println!();
+            println!("{}", "Accelerated Crates".cyan().bold());
+            println!("  blake3     — hashing (SIMD: AVX-512, AVX2, SSE4.1, NEON)");
+            println!("  memchr     — byte search (SIMD: AVX2, SSE2, NEON)");
+            println!("  regex      — pattern matching (SIMD: AVX2, SSE4.2)");
+            #[cfg(feature = "simd")]
+            println!("  simd-json  — JSON parsing (SIMD: AVX2, SSE4.2, NEON)");
+            #[cfg(not(feature = "simd"))]
+            println!("  serde_json — JSON parsing (scalar, enable `simd` feature for acceleration)");
+            println!("  bytecount  — word/byte counting (SIMD: AVX2, SSE4.1, NEON)");
+            println!();
+            println!("  SIMD Level: {}", cpu.simd_level().to_string().green().bold());
             Ok(())
         }
 

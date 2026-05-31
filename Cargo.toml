@@ -1,11 +1,11 @@
 [package]
 name = "mdrust"
-version = "1.3.0"
+version = "1.4.0"
 edition = "2021"
 authors = ["MDrust Contributors"]
 description = "Multi-threaded document-to-markdown converter with OCR, multilingual UI, and MD viewer"
 license = "MIT"
-rust-version = "1.70"
+rust-version = "1.75"
 
 [lib]
 name = "mdrust"
@@ -33,6 +33,9 @@ thiserror = "2.0"
 # Serialization — only where actually needed
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+# SIMD-accelerated JSON parsing — drop-in replacement for serde_json on x86_64/aarch64
+# Falls back to serde_json on unsupported platforms (32-bit x86, etc.)
+simd-json = { version = "0.14", optional = true }
 
 # Document parsing
 lopdf = "0.35"
@@ -71,8 +74,8 @@ walkdir = "2.5"
 # Time — lighter than chrono
 time = { version = "0.3", features = ["formatting", "macros", "serde"] }
 
-# Regex
-regex = "1.11"
+# Regex — with SIMD-accelerated literal search and DFA
+regex = { version = "1.11", features = ["perf-inline", "perf-literal"] }
 
 # System directories
 dirs = "5.0"
@@ -100,7 +103,7 @@ mimalloc = { version = "0.1", default-features = false }
 parking_lot = "0.12"
 
 # ── Aggressive optimizations ──
-# Content-hash cache — skip re-converting identical files
+# Content-hash cache — skip re-converting identical files (already SIMD: AVX2/AVX-512/SSE4.1)
 blake3 = "1.5"
 # Compact string — reduces allocations for file names/paths in batch mode
 compact_str = "0.8"
@@ -108,9 +111,11 @@ compact_str = "0.8"
 smallvec = "1.13"
 # Faster hash map — replaces std HashMap in hot paths
 ahash = "0.8"
+# SIMD-accelerated byte/character counting — replaces .split_whitespace().count()
+bytecount = "0.6"
 
 [features]
-default = ["gui", "ocr", "preview"]
+default = ["gui", "ocr", "preview", "simd"]
 gui = ["image", "egui_commonmark"]
 cli-only = []
 ocr = ["image"]
@@ -118,6 +123,8 @@ preview = ["open", "uuid"]
 full = ["ocr", "preview"]
 light = []
 logs = ["dep:tracing-subscriber"]
+# SIMD acceleration — enables simd-json for faster JSON parsing on x86_64/aarch64
+simd = ["dep:simd-json"]
 
 [profile.release]
 opt-level = 3

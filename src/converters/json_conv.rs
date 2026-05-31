@@ -3,6 +3,9 @@
 //! Reads JSON files and pretty-prints them in fenced code blocks.
 //! If the JSON is an array of objects, also generates a markdown table
 //! from the first-level keys of the objects.
+//!
+//! Uses SIMD-accelerated JSON parsing when the `simd` feature is enabled
+//! (simd-json crate on x86_64/aarch64), falls back to serde_json otherwise.
 
 use super::{ConversionResult, Converter, DocumentConverter, DocumentMetadata};
 use crate::utils::{InputFormat, OutputFormat};
@@ -42,9 +45,33 @@ impl DocumentConverter for JsonConverter {
     }
 }
 
+/// Parse JSON using SIMD-accelerated parser when available, fall back to serde_json.
+///
+/// simd-json requires a mutable byte buffer and works on x86_64/aarch64.
+/// On other platforms or if SIMD parsing fails, we fall back to serde_json.
+fn parse_json_simd(raw: &str) -> Result<serde_json::Value> {
+    #[cfg(feature = "simd")]
+    {
+        // simd-json's serde::from_slice needs a mutable byte buffer
+        let mut bytes = raw.as_bytes().to_vec();
+        match simd_json::serde::from_slice::<serde_json::Value>(&mut bytes) {
+            Ok(value) => return Ok(value),
+            Err(e) => {
+                // SIMD parsing failed — this can happen with very large JSON
+                // or edge cases. Fall back to serde_json.
+                tracing::debug!("simd-json parsing failed, falling back to serde_json: {e}");
+            }
+        }
+    }
+
+    // Fallback: standard serde_json parsing
+    let value: serde_json::Value = serde_json::from_str(raw)?;
+    Ok(value)
+}
+
 fn extract_json_to_markdown(path: &Path, file_size: u64) -> Result<ConversionResult> {
     let raw = std::fs::read_to_string(path)?;
-    let value: serde_json::Value = serde_json::from_str(&raw)?;
+    let value = parse_json_simd(&raw)?;
 
     let title = path
         .file_stem()
@@ -110,7 +137,8 @@ fn extract_json_to_markdown(path: &Path, file_size: u64) -> Result<ConversionRes
         }
     }
 
-    let word_count = markdown.split_whitespace().count();
+    // SIMD-accelerated word counting using bytecount
+    let word_count = crate::utils::count_words(&markdown);
 
     let metadata = DocumentMetadata {
         title,

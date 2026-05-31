@@ -56,7 +56,7 @@ fn extract_txt_to_markdown(path: &Path, file_size: u64) -> Result<ConversionResu
         }
     };
 
-    let word_count = markdown.split_whitespace().count();
+    let word_count = crate::utils::count_words(&markdown);
     let title = markdown
         .lines()
         .find(|l| l.starts_with("# "))

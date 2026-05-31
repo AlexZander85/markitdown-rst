@@ -92,7 +92,7 @@ fn extract_pptx_to_markdown(path: &Path, file_size: u64) -> Result<ConversionRes
         }
     }
 
-    let total_words: usize = slides.iter().map(|(s, _)| s.split_whitespace().count()).sum();
+    let total_words: usize = slides.iter().map(|(s, _)| crate::utils::count_words(s)).sum();
 
     let metadata = DocumentMetadata {
         title: slides

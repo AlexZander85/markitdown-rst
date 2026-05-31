@@ -27,7 +27,7 @@ impl DocumentConverter for HtmlConverter {
                 .build();
             let markdown = converter.convert(&html)?;
 
-            let word_count = markdown.split_whitespace().count();
+            let word_count = crate::utils::count_words(&markdown);
             let title = markdown.lines()
                 .find(|l| l.starts_with("# ") || l.starts_with("## "))
                 .map(|l| l.trim_start_matches('#').trim().to_string());
@@ -73,7 +73,7 @@ impl DocumentConverter for XmlConverter {
 fn extract_xml_to_markdown(path: &Path, file_size: u64) -> Result<ConversionResult> {
     let xml_content = std::fs::read_to_string(path)?;
     let markdown = xml_to_markdown(&xml_content);
-    let word_count = markdown.split_whitespace().count();
+    let word_count = crate::utils::count_words(&markdown);
     let metadata = DocumentMetadata {
         title: None,
         author: None,

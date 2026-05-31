@@ -82,7 +82,7 @@ fn extract_image_ocr_to_markdown(
         markdown.push_str(&ocr_text);
     }
 
-    let word_count = markdown.split_whitespace().count();
+    let word_count = crate::utils::count_words(&markdown);
 
     let metadata = DocumentMetadata {
         title: Some(filename.to_string()),

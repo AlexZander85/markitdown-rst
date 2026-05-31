@@ -63,7 +63,7 @@ pub struct ConversionResult {
 impl ConversionResult {
     #[inline]
     pub fn from_markdown(markdown: String, metadata: DocumentMetadata) -> Self {
-        let word_count = markdown.split_whitespace().count();
+        let word_count = crate::utils::count_words(&markdown);
         Self {
             content: vec![OutputChunk {
                 page_number: 1,
@@ -93,7 +93,7 @@ impl ConversionResult {
     }
 
     pub fn from_pages(pages: Vec<(String, String)>, metadata: DocumentMetadata) -> Self {
-        let total_words: usize = pages.iter().map(|(p, _)| p.split_whitespace().count()).sum();
+        let total_words: usize = pages.iter().map(|(p, _)| crate::utils::count_words(p)).sum();
         let page_count = pages.len();
         let content: Vec<OutputChunk> = pages
             .into_iter()

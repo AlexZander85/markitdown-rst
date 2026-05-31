@@ -30,32 +30,32 @@ jobs:
             target: x86_64-apple-darwin
             edition: full
             features: ""
-          # ── Light edition (GUI, no OCR, no Preview) ──
+          # ── Light edition (GUI, no OCR, no Preview, with SIMD) ──
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             edition: light
-            features: "--no-default-features --features gui"
+            features: "--no-default-features --features gui,simd"
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             edition: light
-            features: "--no-default-features --features gui"
+            features: "--no-default-features --features gui,simd"
           - os: macos-latest
             target: x86_64-apple-darwin
             edition: light
-            features: "--no-default-features --features gui"
-          # ── CLI-only edition (no GUI, with OCR) ──
+            features: "--no-default-features --features gui,simd"
+          # ── CLI-only edition (no GUI, with OCR + SIMD) ──
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             edition: cli-only
-            features: "--no-default-features --features cli-only"
+            features: "--no-default-features --features cli-only,ocr,simd"
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             edition: cli-only
-            features: "--no-default-features --features cli-only"
+            features: "--no-default-features --features cli-only,ocr,simd"
           - os: macos-latest
             target: x86_64-apple-darwin
             edition: cli-only
-            features: "--no-default-features --features cli-only"
+            features: "--no-default-features --features cli-only,ocr,simd"
 
     steps:
       - uses: actions/checkout@v4

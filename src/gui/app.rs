@@ -382,6 +382,22 @@ impl MarkItDownApp {
             }
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                // SIMD level indicator
+                let cpu = crate::cpu::features();
+                let simd_label = cpu.simd_label();
+                let simd_color = match cpu.simd_level() {
+                    crate::cpu::SimdLevel::Avx512 => Theme::SUCCESS,
+                    crate::cpu::SimdLevel::Avx2 => Theme::SUCCESS,
+                    crate::cpu::SimdLevel::Avx => egui::Color32::from_rgb(100, 200, 100),
+                    crate::cpu::SimdLevel::Sse42 | crate::cpu::SimdLevel::Sse41 => Theme::WARNING,
+                    crate::cpu::SimdLevel::Neon => Theme::SUCCESS,
+                    crate::cpu::SimdLevel::None => Theme::ERROR,
+                };
+                ui.label(egui::RichText::new(format!("SIMD: {}", simd_label))
+                    .small().color(simd_color));
+
+                ui.separator();
+
                 #[cfg(feature = "ocr")]
                 if self.tesseract_available {
                     ui.label(egui::RichText::new("OCR: Tesseract OK")

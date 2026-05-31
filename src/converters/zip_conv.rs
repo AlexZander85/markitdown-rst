@@ -201,7 +201,7 @@ fn extract_zip_to_markdown(path: &Path, file_size: u64) -> Result<ConversionResu
         markdown.push_str(&format!("*{} text file(s) extracted*\n", extracted_count));
     }
 
-    let word_count = markdown.split_whitespace().count();
+    let word_count = crate::utils::count_words(&markdown);
 
     let metadata = DocumentMetadata {
         title,

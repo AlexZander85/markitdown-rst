@@ -111,7 +111,7 @@ fn extract_csv_to_markdown(path: &Path, file_size: u64) -> Result<ConversionResu
     markdown.push('\n');
     markdown.push_str(&format!("*{} rows total*\n", row_count));
 
-    let word_count = markdown.split_whitespace().count();
+    let word_count = crate::utils::count_words(&markdown);
 
     let metadata = DocumentMetadata {
         title,
