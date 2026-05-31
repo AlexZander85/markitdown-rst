@@ -132,12 +132,9 @@ impl MarkItDownApp {
         #[cfg(feature = "ocr")]
         let tesseract_status = TesseractStatus::check();
 
-        // Extract tessdata on startup (always, even if engine not installed,
-        // so they're ready when the user installs Tesseract later)
-        #[cfg(feature = "ocr")]
-        {
-            let _ = ocr::ensure_tessdata(&[OcrLanguage::Eng]);
-        }
+        // Note: ocrs models are embedded in the binary via include_bytes!,
+        // so English OCR works instantly with zero downloads.
+        // Tesseract tessdata is downloaded on demand when actually needed.
 
         let (result_tx, result_rx) = std::sync::mpsc::channel();
 
@@ -789,7 +786,7 @@ impl MarkItDownApp {
         remove
     }
 
-    fn draw_preview(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+    fn draw_preview(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
         ui.horizontal(|ui| {
             ui.label(egui::RichText::new(self.i18n.preview()).heading());
 

@@ -284,7 +284,7 @@ async fn run_command(cli: Cli) -> Result<()> {
 
 /// Single-file conversion — full build with OCR
 #[cfg(feature = "ocr")]
-async fn do_convert(input: &PathBuf, output: &Option<PathBuf>, optimize_llm: bool, quiet: bool, ocr_languages: &Vec<OcrLanguage>, output_format: &OutputFormat) -> Result<()> {
+async fn do_convert(input: &PathBuf, output: &Option<PathBuf>, _optimize_llm: bool, quiet: bool, ocr_languages: &Vec<OcrLanguage>, output_format: &OutputFormat) -> Result<()> {
     if !input.exists() { anyhow::bail!("Input file not found: {}", input.display()); }
     if !quiet { println!("{}", "Converting document...".cyan().bold()); println!("  Input:  {}", input.display()); }
     let ext = output_format.extension();
@@ -306,7 +306,7 @@ async fn do_convert(input: &PathBuf, output: &Option<PathBuf>, optimize_llm: boo
 
 /// Single-file conversion — light build without OCR
 #[cfg(not(feature = "ocr"))]
-async fn do_convert(input: &PathBuf, output: &Option<PathBuf>, optimize_llm: bool, quiet: bool, output_format: &OutputFormat) -> Result<()> {
+async fn do_convert(input: &PathBuf, output: &Option<PathBuf>, _optimize_llm: bool, quiet: bool, output_format: &OutputFormat) -> Result<()> {
     if !input.exists() { anyhow::bail!("Input file not found: {}", input.display()); }
     if !quiet { println!("{}", "Converting document...".cyan().bold()); println!("  Input:  {}", input.display()); }
     let ext = output_format.extension();

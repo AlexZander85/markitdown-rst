@@ -1,0 +1,3 @@
+# Binary model files — mark as binary for git
+*.rten binary
+*.traineddata binary

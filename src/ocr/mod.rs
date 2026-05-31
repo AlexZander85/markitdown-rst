@@ -4,7 +4,9 @@
 //! two engines with automatic fallback:
 //!
 //! 1. **Built-in OCR (ocrs)** — Pure Rust, always available, English only.
-//!    Zero external dependencies. No C/C++ libraries needed.
+//!    Neural network models are **embedded in the binary** (~11.7 MB) via
+//!    `include_bytes!` and loaded directly into memory with
+//!    `rten::Model::load_static_slice` — no download, no temp files, no internet.
 //!
 //! 2. **Tesseract CLI** — Optional enhanced engine with 100+ languages.
 //!    Requires `tesseract` binary on PATH (auto-download available from GUI).
@@ -17,14 +19,14 @@
 //!   │
 //!   ├─ Tesseract available + language supported? → Tesseract CLI
 //!   │
-//!   └─ Fallback → ocrs (English only, built-in)
+//!   └─ Fallback → ocrs (English only, built-in, models embedded)
 //! ```
 //!
 //! # Why dual-engine?
 //!
-//! - ocrs: Pure Rust, compiles everywhere, zero runtime deps, but English only
+//! - ocrs: Pure Rust, compiles everywhere, models embedded in binary, English only
 //! - Tesseract: Best quality, 100+ languages, but requires external installation
-//! - Together: English works out-of-the-box, other languages need Tesseract
+//! - Together: English works truly out-of-the-box (offline!), other languages need Tesseract
 
 use anyhow::{bail, Context, Result};
 use std::path::Path;
@@ -206,7 +208,7 @@ impl OcrEngineStatus {
     pub fn tooltip(&self) -> &'static str {
         match self {
             OcrEngineStatus::BothAvailable => "Built-in ocrs for English + Tesseract for all languages",
-            OcrEngineStatus::BuiltinOnly => "Built-in ocrs engine (English only). Install Tesseract for more languages.",
+            OcrEngineStatus::BuiltinOnly => "Built-in ocrs engine (English, models embedded). Install Tesseract for more languages.",
             OcrEngineStatus::TesseractOnly => "Tesseract OCR is available. Built-in engine not compiled in.",
             OcrEngineStatus::NoneAvailable => "No OCR engine available. This should not happen.",
         }
@@ -244,11 +246,10 @@ impl TesseractStatus {
     pub fn tooltip(&self) -> &'static str {
         match self {
             TesseractStatus::Available => "Tesseract OCR is available. Built-in ocrs + Tesseract for all languages.",
-            TesseractStatus::NotInstalled => "Built-in ocrs works for English. Install Tesseract for Russian, Chinese, and 100+ languages.\n\
+            TesseractStatus::NotInstalled => "Built-in ocrs works for English (models embedded in binary, no download needed). Install Tesseract for Russian, Chinese, and 100+ languages.\n\
                 Linux: sudo apt install tesseract-ocr\n\
                 macOS: brew install tesseract\n\
-                Windows: choco install tesseract\n\
-                Or click 'Install Tesseract' button in sidebar.",
+                Windows: click 'Install Tesseract' button below.",
         }
     }
 }
@@ -311,28 +312,20 @@ pub fn ocr_image_to_markdown(image_path: &Path, languages: &[OcrLanguage]) -> Re
 }
 
 /// OCR using the built-in ocrs engine (English only).
+///
+/// Models are embedded directly in the binary via `include_bytes!` and loaded
+/// from memory with `rten::Model::load_static_slice`. No downloads, no temp
+/// files, no internet required — truly works offline out of the box.
 fn ocr_via_builtin(image_path: &Path) -> Result<String> {
     use ocrs::{OcrEngine, ImageSource};
 
-    // Ensure models are downloaded
-    let model_dir = crate::utils::app_data_dir().join("ocrs-models");
-    let _ = std::fs::create_dir_all(&model_dir);
-
-    let det_model_path = model_dir.join("text-detection.rten");
-    let rec_model_path = model_dir.join("text-recognition.rten");
-
-    // Download models if missing
-    if !det_model_path.exists() {
-        download_ocrs_model("text-detection.rten", &det_model_path)?;
-    }
-    if !rec_model_path.exists() {
-        download_ocrs_model("text-recognition.rten", &rec_model_path)?;
-    }
-
-    let det_model = rten::Model::load_file(&det_model_path)
-        .with_context(|| "Failed to load text detection model")?;
-    let rec_model = rten::Model::load_file(&rec_model_path)
-        .with_context(|| "Failed to load text recognition model")?;
+    // Load models from embedded bytes — zero I/O, zero network
+    let det_model = rten::Model::load_static_slice(
+        include_bytes!("../../models/text-detection.rten")
+    ).with_context(|| "Failed to load embedded text detection model")?;
+    let rec_model = rten::Model::load_static_slice(
+        include_bytes!("../../models/text-recognition.rten")
+    ).with_context(|| "Failed to load embedded text recognition model")?;
 
     let engine = OcrEngine::new(ocrs::OcrEngineParams {
         detection_model: Some(det_model),
@@ -355,31 +348,6 @@ fn ocr_via_builtin(image_path: &Path) -> Result<String> {
     }
 
     Ok(postprocess_to_markdown(&text))
-}
-
-/// Download ocrs model file from GitHub releases.
-fn download_ocrs_model(filename: &str, dest: &Path) -> Result<()> {
-    let url = format!(
-        "https://github.com/robertknight/ocrs/releases/download/v0.12.0/{}",
-        filename
-    );
-    tracing::info!("Downloading ocrs model: {}", url);
-
-    let response = reqwest::blocking::Client::new()
-        .get(&url)
-        .timeout(std::time::Duration::from_secs(120))
-        .send()
-        .with_context(|| format!("Failed to download ocrs model {}", filename))?;
-
-    if !response.status().is_success() {
-        bail!("Failed to download ocrs model {}: HTTP {}", filename, response.status());
-    }
-
-    let bytes = response.bytes()?;
-    std::fs::write(dest, &bytes)?;
-    tracing::info!("Downloaded ocrs model {} ({} bytes)", filename, bytes.len());
-
-    Ok(())
 }
 
 /// OCR via Tesseract CLI subprocess

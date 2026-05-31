@@ -1,6 +1,6 @@
 [package]
 name = "mdrust"
-version = "2.0.0"
+version = "2.0.1"
 edition = "2021"
 authors = ["MDrust Contributors"]
 description = "Multi-threaded document-to-markdown converter with OCR, multilingual UI, and MD viewer"

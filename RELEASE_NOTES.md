@@ -1,49 +1,51 @@
-# MDrust v2.0.0 — Major Release
+# MDrust v2.0.1 — Bugfix & Enhancement Release
 
-## 🚀 Built-in OCR Engine (ocrs)
+## Embedded OCR Models — Truly Offline
 
-MDrust now includes **ocrs** — a pure Rust OCR engine — directly in the binary. No external dependencies required for English text recognition.
+The built-in **ocrs** neural network models (text-detection + text-recognition,
+~11.7 MB total) are now **embedded directly in the binary** via `include_bytes!`
+and loaded from memory with `rten::Model::load_static_slice`.
 
-- **Zero dependencies**: No Tesseract, no C/C++ libraries, no installation needed
-- **Works out of the box**: English OCR is always available in Full edition
-- **Cross-platform**: Compiles and runs on Linux, macOS, and Windows without issues
+- **No downloads needed**: English OCR works instantly, offline, zero network access
+- **No temp files**: Models load directly from binary memory — no disk I/O overhead
+- **No contradictions**: "Works out of the box" now actually means out of the box
 
-## 📚 Optional Tesseract Integration
+## Startup Optimization
 
-For 100+ languages (Russian, Chinese, Arabic, etc.), MDrust can optionally use Tesseract:
+- Removed `ensure_tessdata()` call on startup — tessdata for Tesseract is now
+  downloaded only when Tesseract OCR is actually used, not on app launch
+- Faster app startup: no network calls during initialization
 
-- **Auto-download**: Click "Install Tesseract" button in the sidebar
-- **On-demand tessdata**: Language data is downloaded only when needed (not embedded in binary)
-- **Smart fallback**: Uses ocrs for English, Tesseract for other languages
+## Architecture
 
-## 📄 Scanned PDF Support
+| Component | Location | Size Impact |
+|-----------|----------|-------------|
+| ocrs models (det + rec) | Embedded in binary (`include_bytes!`) | +11.7 MB |
+| ocrs engine code | Compiled in (pure Rust) | +0 MB (code) |
+| Tesseract tessdata | Downloaded on demand | 0 MB in binary |
+| pdfium-render | Optional feature (`pdf-to-image`) | +library |
 
-New PDF-to-image OCR pipeline for scanned documents:
+## OCR Engine Summary
 
-- **pdfium-render** renders PDF pages to high-resolution images
-- **ocrs/Tesseract** then recognizes text from those images
-- Automatic fallback: text extraction → lopdf → PDF rendering + OCR
+| Engine | Languages | Install needed? | How it works |
+|--------|-----------|----------------|--------------|
+| **ocrs** | English | No — built-in + models embedded | `include_bytes!` → `load_static_slice` |
+| **Tesseract** | 100+ | Yes — CLI + tessdata | Subprocess + on-demand download |
 
-## 🏗️ Architecture Changes
+## Previous: v2.0.0 Changes
 
-- **Removed `include_bytes!` tessdata**: Binary size reduced by ~10 MB
-- **Added `ocrs` + `rten`**: Pure Rust OCR engine (built-in)
-- **Added `pdfium-render`**: PDF rendering for scanned documents
-- **Added `reqwest`**: HTTP client for downloading models and tessdata on demand
-- **Added `glow` feature** to eframe: GPU fallback renderer now works
-- **New feature flag `pdf-to-image`**: Enables PDF → image → OCR pipeline
+- Built-in ocrs OCR engine (pure Rust, English only)
+- Optional Tesseract CLI for 100+ languages with one-click install
+- pdfium-render for scanned PDF support (3-tier fallback)
+- Removed embedded tessdata from binary (-10 MB)
+- Fixed PDF "0/1 files converted" bug
+- Fixed eframe glow fallback
+- Fixed CI workflow feature syntax
 
-## 🐛 Bug Fixes
-
-- Fixed PDF conversion returning "0/1 files converted" for text-based PDFs
-- Fixed Tesseract status not refreshing after installation
-- Fixed eframe glow fallback not working (missing feature flag)
-- Fixed CI workflow feature syntax (quoted feature lists)
-
-## 📦 Downloads
+## Downloads
 
 | Edition | Description | OCR | Preview |
 |---------|-------------|-----|---------|
-| **Full** | GUI + OCR + Preview + PDF-to-Image | ocrs + Tesseract | Yes |
+| **Full** | GUI + OCR + Preview + PDF-to-Image | ocrs (embedded) + Tesseract (optional) | Yes |
 | **Light** | GUI only | No | No |
-| **CLI** | Command-line only | ocrs + Tesseract | No |
+| **CLI** | Command-line only | ocrs (embedded) + Tesseract (optional) | No |

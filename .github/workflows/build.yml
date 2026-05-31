@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+env:
+  CARGO_TERM_COLOR: always
+  # Increase swap for LTO builds (pdfium-render + ocrs are memory-heavy)
+  RUSTFLAGS: "-C target-cpu=x86-64-v2"
+
 jobs:
   build:
     name: Build ${{ matrix.edition }} for ${{ matrix.target }}
@@ -18,7 +23,7 @@ jobs:
       matrix:
         include:
           # ── Full edition (GUI + OCR + Preview + PDF-to-Image) ──
-          # Built-in ocrs (English) + optional Tesseract CLI (100+ languages)
+          # Built-in ocrs (English, models embedded) + optional Tesseract CLI (100+ languages)
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             edition: full
@@ -78,14 +83,11 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Cache Cargo
-        uses: actions/cache@v4
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ matrix.os }}-${{ matrix.edition }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ matrix.os }}-${{ matrix.edition }}-cargo-
+          key: ${{ matrix.edition }}
+          cache-targets: true
+          cache-on-failure: true
 
       # ── Build ──
       - name: Build GUI binary (Full / Light)
