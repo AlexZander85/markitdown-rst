@@ -13,7 +13,7 @@
 use crate::batch::{BatchProcessor, FileEntry, FileStatus};
 use crate::i18n::{I18n, Language};
 #[cfg(feature = "ocr")]
-use crate::ocr::{self, OcrLanguage};
+use crate::ocr::{self, OcrLanguage, TesseractStatus};
 #[cfg(feature = "preview")]
 use crate::preview;
 use crate::utils::{OutputFormat, detect_format, format_size};
@@ -87,9 +87,9 @@ pub struct MarkItDownApp {
     /// OCR: Simplified Chinese language enabled
     #[cfg(feature = "ocr")]
     ocr_chi_sim: bool,
-    /// OCR: Tesseract availability
+    /// OCR: Tesseract availability status
     #[cfg(feature = "ocr")]
-    tesseract_available: bool,
+    tesseract_status: TesseractStatus,
     /// Current preview tab
     preview_tab: PreviewTab,
     /// Zoom level for preview
@@ -130,11 +130,12 @@ impl MarkItDownApp {
             .to_string();
 
         #[cfg(feature = "ocr")]
-        let tesseract_available = ocr::is_tesseract_available();
+        let tesseract_status = TesseractStatus::check();
 
-        // Extract tessdata on startup
+        // Extract tessdata on startup (always, even if engine not installed,
+        // so they're ready when the user installs Tesseract later)
         #[cfg(feature = "ocr")]
-        if tesseract_available {
+        {
             let _ = ocr::ensure_tessdata(&[OcrLanguage::Eng]);
         }
 
@@ -170,7 +171,7 @@ impl MarkItDownApp {
             #[cfg(feature = "ocr")]
             ocr_chi_sim: false,
             #[cfg(feature = "ocr")]
-            tesseract_available,
+            tesseract_status,
             preview_tab: PreviewTab::Rendered,
             zoom: 1.0,
             notification: None,
@@ -485,12 +486,13 @@ impl MarkItDownApp {
                 ui.separator();
 
                 #[cfg(feature = "ocr")]
-                if self.tesseract_available {
-                    ui.label(egui::RichText::new("OCR: Tesseract OK")
-                        .small().color(Theme::SUCCESS));
-                } else {
-                    ui.label(egui::RichText::new("OCR: unavailable")
-                        .small().color(Theme::WARNING));
+                {
+                    let (label, color) = match self.tesseract_status {
+                        TesseractStatus::Available => (self.tesseract_status.status_label(), Theme::SUCCESS),
+                        TesseractStatus::NotInstalled => (self.tesseract_status.status_label(), Theme::WARNING),
+                    };
+                    let response = ui.label(egui::RichText::new(label).small().color(color));
+                    response.on_hover_text(self.tesseract_status.tooltip());
                 }
 
                 ui.label(egui::RichText::new(format!("{} files", self.files.len()))

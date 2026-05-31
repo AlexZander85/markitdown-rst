@@ -7,6 +7,11 @@
 //! - **Embedded tessdata**: Language files (eng, rus, chi_sim) are embedded at compile time
 //!   via `include_bytes!` and extracted on first run
 //!
+//! **Important**: The tessdata (language models) are embedded in the binary, but the
+//! Tesseract **engine** (libtesseract shared library or tesseract CLI) must be installed
+//! on the system. It is NOT possible to statically link the entire Tesseract engine into
+//! the binary due to its complex C++ dependencies (leptonica, libpng, libjpeg, libtiff, etc.).
+//!
 //! # Prerequisites
 //! The `libtesseract` shared library must be available on the system.
 //!
@@ -142,6 +147,45 @@ pub fn is_tesseract_available() -> bool {
 
     // Fallback: check CLI
     is_tesseract_cli_available()
+}
+
+/// Detailed Tesseract availability status for GUI display.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TesseractStatus {
+    /// Tesseract is available and ready (FFI or CLI)
+    Available,
+    /// Tesseract engine not found — tessdata embedded but engine not installed
+    NotInstalled,
+}
+
+impl TesseractStatus {
+    /// Check and return the current Tesseract status.
+    pub fn check() -> Self {
+        if is_tesseract_available() {
+            TesseractStatus::Available
+        } else {
+            TesseractStatus::NotInstalled
+        }
+    }
+
+    /// Get the status bar label for the GUI (English)
+    pub fn status_label(&self) -> &'static str {
+        match self {
+            TesseractStatus::Available => "OCR: Tesseract OK",
+            TesseractStatus::NotInstalled => "OCR: engine not installed",
+        }
+    }
+
+    /// Get the tooltip/hint for the GUI (installation instructions)
+    pub fn tooltip(&self) -> &'static str {
+        match self {
+            TesseractStatus::Available => "Tesseract OCR is available and ready",
+            TesseractStatus::NotInstalled => "Tessdata (language models) are embedded, but the Tesseract engine must be installed separately.\n\
+                Linux: sudo apt install libtesseract-dev libleptonica-dev\n\
+                macOS: brew install tesseract leptonica\n\
+                Windows: choco install tesseract",
+        }
+    }
 }
 
 /// Check if Tesseract FFI (libtesseract) is available at runtime.

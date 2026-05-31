@@ -2860,7 +2860,7 @@ dependencies = [
 
 [[package]]
 name = "mdrust"
-version = "1.4.0"
+version = "1.4.1"
 dependencies = [
  "ahash",
  "anyhow",

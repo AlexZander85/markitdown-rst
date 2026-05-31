@@ -1,8 +1,13 @@
 //! PDF to Markdown converter — optimized single-pass loading
+//!
+//! Uses a three-tier extraction strategy:
+//! 1. `pdf-extract` — best quality text extraction (but may panic on some PDFs)
+//! 2. `lopdf` — fallback page-by-page extraction
+//! 3. Graceful error with diagnostics if both fail
 
 use super::{ConversionResult, Converter, DocumentConverter, DocumentMetadata};
 use crate::utils::{InputFormat, OutputFormat};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use std::path::Path;
 
@@ -18,10 +23,15 @@ impl DocumentConverter for PdfConverter {
 
     async fn convert(&self, path: &Path, _output_format: &OutputFormat) -> Result<ConversionResult> {
         let path = path.to_path_buf();
-        let file_size = tokio::fs::metadata(&path).await?.len();
+        let file_size = tokio::fs::metadata(&path)
+            .await
+            .with_context(|| format!("Cannot access PDF file: {}", path.display()))?
+            .len();
+        let path_display = path.display().to_string();
         let result = tokio::task::spawn_blocking(move || {
             extract_pdf_to_markdown(&path, file_size)
-        }).await??;
+        }).await
+            .with_context(|| format!("PDF conversion task crashed (likely unsupported PDF structure): {}", path_display))??;
         Ok(result)
     }
 }
@@ -31,14 +41,38 @@ fn extract_pdf_to_markdown(path: &Path, file_size: u64) -> Result<ConversionResu
     let doc = lopdf::Document::load(path).ok();
     let page_count = doc.as_ref().map(|d| d.get_pages().len()).unwrap_or(1);
 
-    // Try pdf-extract first (better quality)
-    let text = match pdf_extract::extract_text(path) {
-        Ok(t) if !t.trim().is_empty() => t,
-        _ => match doc {
-            Some(d) => extract_text_from_doc(&d),
-            None => return Err(anyhow::anyhow!("Failed to load PDF: {}", path.display())),
-        },
+    // Try pdf-extract first (better quality) — catch panics because
+    // pdf-extract can panic on malformed or encrypted PDFs
+    let text = match extract_text_via_pdf_extract(path) {
+        Some(t) if !t.trim().is_empty() => t,
+        _ => {
+            tracing::debug!(
+                "pdf-extract failed for {}, falling back to lopdf",
+                path.display()
+            );
+            match doc {
+                Some(d) => extract_text_from_doc(&d),
+                None => {
+                    return Err(anyhow::anyhow!(
+                        "Failed to extract text from PDF: {}. \
+                         The file may be encrypted, corrupted, or contain only images. \
+                         Try: 1) Remove PDF password, 2) Use OCR edition for scanned documents",
+                        path.display()
+                    ));
+                }
+            }
+        }
     };
+
+    // If both extractors returned empty text, the PDF might be scanned/image-based
+    if text.trim().is_empty() {
+        return Err(anyhow::anyhow!(
+            "PDF contains no extractable text: {}. \
+             This typically means the PDF is a scanned image. \
+             Use OCR (Tesseract) to recognize text from image-based PDFs.",
+            path.display()
+        ));
+    }
 
     let (markdown, title, word_count) = text_to_markdown_with_meta(&text);
 
@@ -53,6 +87,19 @@ fn extract_pdf_to_markdown(path: &Path, file_size: u64) -> Result<ConversionResu
     };
 
     Ok(ConversionResult::from_markdown_no_recount(markdown, metadata))
+}
+
+/// Try to extract text using pdf-extract, catching panics.
+///
+/// `pdf-extract` can panic on certain PDF structures (e.g., encrypted files,
+/// malformed streams, or unsupported compression). We use `catch_unwind`
+/// to prevent the panic from killing the entire conversion task.
+fn extract_text_via_pdf_extract(path: &Path) -> Option<String> {
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        pdf_extract::extract_text(path)
+    }))
+    .ok()
+    .and_then(|result| result.ok())
 }
 
 fn extract_text_from_doc(doc: &lopdf::Document) -> String {

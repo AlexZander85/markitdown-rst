@@ -90,8 +90,9 @@
 
 #### 🔍 Built-in OCR (Tesseract)
 
-- **Tesseract OCR** integrated into the app — **no separate installation needed**
-- **tessdata_fast** for 3 languages embedded directly into the binary via `include_bytes!`:
+- **Tesseract tessdata (language models)** embedded directly into the binary via `include_bytes!` — **no language data download needed**
+- **Tesseract engine** requires system installation (`libtesseract` / `tesseract` CLI) — it cannot be statically linked due to C++ dependencies (leptonica, libpng, etc.)
+- **tessdata_fast** for 3 languages:
   - 🇬🇧 English (~4 MB)
   - 🇷🇺 Russian (~3.7 MB)
   - 🇨🇳 Simplified Chinese (~2.4 MB)
@@ -402,8 +403,9 @@ cargo test --all-features
 
 #### 🔍 Встроенный OCR (Tesseract)
 
-- **Tesseract OCR** интегрирован в приложение — **не нужно устанавливать отдельно**
-- **tessdata_fast** для 3 языков зашита прямо в бинарник через `include_bytes!`:
+- **Tessdata (языковые модели) Tesseract** зашиты прямо в бинарник через `include_bytes!` — **не нужно скачивать языковые данные**
+- **Движок Tesseract** требует установки в системе (`libtesseract` / CLI `tesseract`) — его невозможно встроить статически из-за C++ зависимостей (leptonica, libpng и т.д.)
+- **tessdata_fast** для 3 языков:
   - 🇬🇧 Английский (~4 MB)
   - 🇷🇺 Русский (~3.7 MB)
   - 🇨🇳 Китайский упрощённый (~2.4 MB)
@@ -714,8 +716,9 @@ cargo test --all-features
 
 #### 🔍 内置 OCR（Tesseract）
 
-- **Tesseract OCR** 已集成到应用程序中——**无需单独安装**
-- 3 种语言的 **tessdata_fast** 通过 `include_bytes!` 直接嵌入二进制文件：
+- **Tessdata（语言模型）** 通过 `include_bytes!` 直接嵌入二进制文件——**无需下载语言数据**
+- **Tesseract 引擎**需要系统安装（`libtesseract` / `tesseract` CLI）——由于 C++ 依赖（leptonica、libpng 等），无法静态链接
+- 3 种语言的 **tessdata_fast**：
   - 🇬🇧 英语（~4 MB）
   - 🇷🇺 俄语（~3.7 MB）
   - 🇨🇳 简体中文（~2.4 MB）

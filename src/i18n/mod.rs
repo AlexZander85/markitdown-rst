@@ -474,9 +474,9 @@ impl I18n {
     /// Tesseract OCR not-found warning.
     pub fn tesseract_not_found(&self) -> &'static str {
         match self.lang {
-            Language::En => "OCR: Tesseract not available (install libtesseract-dev or tesseract-ocr)",
-            Language::Ru => "OCR: Tesseract \u{043d}\u{0435}\u{0434}\u{043e}\u{0441}\u{0442}\u{0443}\u{043f}\u{0435}\u{043d} (\u{0443}\u{0441}\u{0442}\u{0430}\u{043d}\u{043e}\u{0432}\u{0438}\u{0442}\u{0435} libtesseract-dev \u{0438}\u{043b}\u{0438} tesseract-ocr)",
-            Language::Zh => "OCR: Tesseract \u{4e0d}\u{53ef}\u{7528} (\u{8bf7}\u{5b89}\u{88c5} libtesseract-dev \u{6216} tesseract-ocr)",
+            Language::En => "OCR: Tesseract engine not installed (tessdata embedded, install libtesseract-dev or tesseract-ocr)",
+            Language::Ru => "OCR: \u{0434}\u{0432}\u{0438}\u{0436}\u{043e}\u{043a} Tesseract \u{043d}\u{0435} \u{0443}\u{0441}\u{0442}\u{0430}\u{043d}\u{043e}\u{0432}\u{043b}\u{0435}\u{043d} (\u{044f}\u{0437}\u{044b}\u{043a}\u{043e}\u{0432}\u{044b}\u{0435} \u{0434}\u{0430}\u{043d}\u{043d}\u{044b}\u{0435} \u{0432}\u{0441}\u{0442}\u{0440}\u{043e}\u{0435}\u{043d}\u{044b}, \u{0443}\u{0441}\u{0442}\u{0430}\u{043d}\u{043e}\u{0432}\u{0438}\u{0442}\u{0435} libtesseract-dev \u{0438}\u{043b}\u{0438} tesseract-ocr)",
+            Language::Zh => "OCR: Tesseract \u{5f15}\u{64ce}\u{672a}\u{5b89}\u{88c5} (\u{8bed}\u{8a00}\u{6570}\u{636e}\u{5df2}\u{5d4c}\u{5165}\u{ff0c}\u{8bf7}\u{5b89}\u{88c5} libtesseract-dev \u{6216} tesseract-ocr)",
         }
     }
 
