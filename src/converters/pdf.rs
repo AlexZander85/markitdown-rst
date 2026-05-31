@@ -1,13 +1,14 @@
-//! PDF to Markdown converter — optimized single-pass loading
+//! PDF to Markdown converter — three-tier extraction with OCR fallback
 //!
-//! Uses a three-tier extraction strategy:
+//! Extraction strategy:
 //! 1. `pdf-extract` — best quality text extraction (but may panic on some PDFs)
 //! 2. `lopdf` — fallback page-by-page extraction
-//! 3. Graceful error with diagnostics if both fail
+//! 3. `pdfium-render` → OCR — for scanned/image-based PDFs (if feature enabled)
+//! 4. Graceful error with diagnostics if all methods fail
 
 use super::{ConversionResult, Converter, DocumentConverter, DocumentMetadata};
 use crate::utils::{InputFormat, OutputFormat};
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use std::path::Path;
 
@@ -31,7 +32,7 @@ impl DocumentConverter for PdfConverter {
         let result = tokio::task::spawn_blocking(move || {
             extract_pdf_to_markdown(&path, file_size)
         }).await
-            .with_context(|| format!("PDF conversion task crashed (likely unsupported PDF structure): {}", path_display))??;
+            .with_context(|| format!("PDF conversion task crashed: {}", path_display))??;
         Ok(result)
     }
 }
@@ -53,23 +54,78 @@ fn extract_pdf_to_markdown(path: &Path, file_size: u64) -> Result<ConversionResu
             match doc {
                 Some(d) => extract_text_from_doc(&d),
                 None => {
-                    return Err(anyhow::anyhow!(
-                        "Failed to extract text from PDF: {}. \
-                         The file may be encrypted, corrupted, or contain only images. \
-                         Try: 1) Remove PDF password, 2) Use OCR edition for scanned documents",
-                        path.display()
-                    ));
+                    // Final attempt: pdfium-render + OCR (if available)
+                    #[cfg(feature = "pdf-to-image")]
+                    {
+                        tracing::info!("Attempting PDF → image → OCR for {}", path.display());
+                        match pdf_to_ocr(path) {
+                            Ok(md) => return Ok(ConversionResult::from_markdown_no_recount(
+                                md,
+                                DocumentMetadata {
+                                    title: None,
+                                    author: None,
+                                    page_count,
+                                    word_count: 0,
+                                    source_format: InputFormat::Pdf,
+                                    source_path: path.display().to_string(),
+                                    file_size_bytes: file_size,
+                                },
+                            )),
+                            Err(e) => {
+                                tracing::warn!("PDF OCR fallback failed: {}", e);
+                                return Err(anyhow::anyhow!(
+                                    "Failed to extract text from PDF: {}. \
+                                     The file may be encrypted, corrupted, or contain only images. \
+                                     Try: 1) Remove PDF password, 2) Install Tesseract for better OCR",
+                                    path.display()
+                                ));
+                            }
+                        }
+                    }
+
+                    #[cfg(not(feature = "pdf-to-image"))]
+                    {
+                        return Err(anyhow::anyhow!(
+                            "Failed to extract text from PDF: {}. \
+                             The file may be encrypted, corrupted, or contain only images. \
+                             Try: 1) Remove PDF password, 2) Use Full edition with OCR for scanned documents",
+                            path.display()
+                        ));
+                    }
                 }
             }
         }
     };
 
-    // If both extractors returned empty text, the PDF might be scanned/image-based
+    // If both extractors returned empty text, try OCR fallback
     if text.trim().is_empty() {
+        #[cfg(feature = "pdf-to-image")]
+        {
+            tracing::info!("PDF text is empty, attempting OCR for {}", path.display());
+            match pdf_to_ocr(path) {
+                Ok(md) if !md.trim().is_empty() => {
+                    return Ok(ConversionResult::from_markdown_no_recount(
+                        md,
+                        DocumentMetadata {
+                            title: None,
+                            author: None,
+                            page_count,
+                            word_count: 0,
+                            source_format: InputFormat::Pdf,
+                            source_path: path.display().to_string(),
+                            file_size_bytes: file_size,
+                        },
+                    ));
+                }
+                Ok(_) => {} // OCR also returned empty
+                Err(e) => tracing::warn!("PDF OCR fallback failed: {}", e),
+            }
+        }
+
         return Err(anyhow::anyhow!(
             "PDF contains no extractable text: {}. \
              This typically means the PDF is a scanned image. \
-             Use OCR (Tesseract) to recognize text from image-based PDFs.",
+             Use the Full edition with OCR support to recognize text from image-based PDFs.",
             path.display()
         ));
     }
@@ -87,6 +143,78 @@ fn extract_pdf_to_markdown(path: &Path, file_size: u64) -> Result<ConversionResu
     };
 
     Ok(ConversionResult::from_markdown_no_recount(markdown, metadata))
+}
+
+/// Render PDF pages to images and run OCR on them.
+#[cfg(feature = "pdf-to-image")]
+fn pdf_to_ocr(path: &Path) -> Result<String> {
+    use pdfium_render::prelude::*;
+
+    let pdfium = Pdfium::new(
+        Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("./"))
+            .or_else(|_| Pdfium::bind_to_system_library())
+            .map_err(|e| anyhow::anyhow!("Failed to bind PDFium library: {}", e))?
+    );
+
+    let document = pdfium.load_pdf_from_file(path, None)
+        .with_context(|| format!("PDFium failed to load PDF: {}", path.display()))?;
+
+    let mut full_text = String::new();
+    let pages = document.pages();
+
+    for (page_idx, page) in pages.iter().enumerate() {
+        // Render page to bitmap (300 DPI for good OCR quality)
+        let bitmap = page.render_with_config(&PdfRenderConfig::new()
+            .set_target_width(2480)  // ~300 DPI for letter-size
+            .set_target_height(3508)
+        )?;
+
+        // Convert to image::DynamicImage
+        let (width, height) = (bitmap.width() as u32, bitmap.height() as u32);
+        let rgba_data = bitmap.as_rgba_bytes();
+        let img_buffer = image::ImageBuffer::from_raw(width, height, rgba_data.to_vec())
+            .ok_or_else(|| anyhow::anyhow!("Failed to create image buffer from PDF page"))?;
+        let dynamic_image = image::DynamicImage::ImageRgba8(img_buffer);
+
+        // Save to temp file for OCR
+        let temp_dir = std::env::temp_dir();
+        let temp_path = temp_dir.join(format!("mdrust_pdf_page_{}.png", page_idx));
+        dynamic_image.save(&temp_path)
+            .with_context(|| format!("Failed to save PDF page {} as image", page_idx))?;
+
+        // Run OCR on the image
+        #[cfg(feature = "ocr")]
+        {
+            let ocr_result = crate::ocr::ocr_image_to_markdown(
+                &temp_path,
+                &[crate::ocr::OcrLanguage::Eng],
+            );
+
+            match ocr_result {
+                Ok(text) if !text.trim().is_empty() => {
+                    if !full_text.is_empty() {
+                        full_text.push_str("\n\n---\n\n");
+                    }
+                    full_text.push_str(&format!("## Page {}\n\n{}", page_idx + 1, text));
+                }
+                Ok(_) => {
+                    tracing::warn!("OCR returned empty text for page {}", page_idx + 1);
+                }
+                Err(e) => {
+                    tracing::warn!("OCR failed for page {}: {}", page_idx + 1, e);
+                }
+            }
+        }
+
+        // Clean up temp file
+        let _ = std::fs::remove_file(&temp_path);
+    }
+
+    if full_text.trim().is_empty() {
+        bail!("OCR produced no text from any page of the PDF");
+    }
+
+    Ok(full_text)
 }
 
 /// Try to extract text using pdf-extract, catching panics.

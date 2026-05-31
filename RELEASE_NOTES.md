@@ -1,38 +1,49 @@
-## MDrust v1.5.0 — CI Fix, Remove tesseract-ffi, macOS ARM64 Native
+# MDrust v2.0.0 — Major Release
 
-Major release fixing CI/CD pipeline failures and simplifying OCR integration.
+## 🚀 Built-in OCR Engine (ocrs)
 
-### Breaking Changes
+MDrust now includes **ocrs** — a pure Rust OCR engine — directly in the binary. No external dependencies required for English text recognition.
 
-- **Removed `tesseract-ffi` feature** — The `tesseract-ffi` Cargo feature has been removed. OCR now uses the Tesseract CLI subprocess exclusively. This eliminates all compile-time C/C++ dependencies (libtesseract-dev, libleptonica-dev, vcpkg) while providing identical OCR functionality at runtime. The `ocr` feature still works — it just calls the `tesseract` CLI instead of linking to libtesseract via FFI.
+- **Zero dependencies**: No Tesseract, no C/C++ libraries, no installation needed
+- **Works out of the box**: English OCR is always available in Full edition
+- **Cross-platform**: Compiles and runs on Linux, macOS, and Windows without issues
 
-### Bug Fixes
+## 📚 Optional Tesseract Integration
 
-- **Fixed: CI builds failing on macOS and Windows** — `leptonica-sys` and `tesseract-sys` could not compile on macOS (pkg-config cross-compilation error) and Windows (vcpkg not found). Removing the FFI dependency fixes builds on all platforms.
-- **Fixed: macOS target architecture** — Changed from `x86_64-apple-darwin` to `aarch64-apple-darwin` since `macos-latest` GitHub Actions runners are now Apple Silicon (M1/M2). macOS binaries are now native ARM64 (`macos-arm64` suffix).
-- **Fixed: PDF conversion returning "0/1 files converted"** (carried from v1.4.1) — `pdf-extract` can panic on malformed/encrypted/image-based PDFs, killing the conversion task. Now uses `catch_unwind` to safely handle panics and falls back to `lopdf` page-by-page extraction.
-- **Fixed: Tesseract status message** — GUI now clearly shows "OCR: engine not installed" with a hover tooltip explaining that tessdata is embedded but the Tesseract CLI requires system installation.
+For 100+ languages (Russian, Chinese, Arabic, etc.), MDrust can optionally use Tesseract:
 
-### Improvements
+- **Auto-download**: Click "Install Tesseract" button in the sidebar
+- **On-demand tessdata**: Language data is downloaded only when needed (not embedded in binary)
+- **Smart fallback**: Uses ocrs for English, Tesseract for other languages
 
-- **Zero compile-time C dependencies for OCR** — Building with OCR support no longer requires libtesseract-dev, libleptonica-dev, pkg-config, or vcpkg. Only the Rust toolchain is needed.
-- **tessdata always extracted on startup** — Language data files are extracted on first run regardless of whether Tesseract is installed, so they're ready immediately when the user installs Tesseract later.
-- **Cleaned up tessdata folder** — Removed outdated references to the old project name "markitdown-rs".
+## 📄 Scanned PDF Support
 
-### Downloads
+New PDF-to-image OCR pipeline for scanned documents:
 
-| File | Edition | OS | Arch |
-|------|---------|----|------|
-| `mdrust-full-linux-x64.tar.gz` | Full (GUI + OCR + Preview) | Linux | x86_64 |
-| `mdrust-full-macos-arm64.tar.gz` | Full | macOS | ARM64 |
-| `mdrust-full-windows-x64.exe` | Full | Windows | x86_64 |
-| `mdrust-light-linux-x64.tar.gz` | Light (GUI, no OCR) | Linux | x86_64 |
-| `mdrust-light-macos-arm64.tar.gz` | Light | macOS | ARM64 |
-| `mdrust-light-windows-x64.exe` | Light | Windows | x86_64 |
-| `mdrust-cli-linux-x64.tar.gz` | CLI-only (OCR) | Linux | x86_64 |
-| `mdrust-cli-macos-arm64.tar.gz` | CLI-only | macOS | ARM64 |
-| `mdrust-cli-windows-x64.exe` | CLI-only | Windows | x86_64 |
+- **pdfium-render** renders PDF pages to high-resolution images
+- **ocrs/Tesseract** then recognizes text from those images
+- Automatic fallback: text extraction → lopdf → PDF rendering + OCR
 
----
+## 🏗️ Architecture Changes
 
-**Full Changelog**: https://github.com/AlexZander85/MDrust/compare/v1.4.0...v1.5.0
+- **Removed `include_bytes!` tessdata**: Binary size reduced by ~10 MB
+- **Added `ocrs` + `rten`**: Pure Rust OCR engine (built-in)
+- **Added `pdfium-render`**: PDF rendering for scanned documents
+- **Added `reqwest`**: HTTP client for downloading models and tessdata on demand
+- **Added `glow` feature** to eframe: GPU fallback renderer now works
+- **New feature flag `pdf-to-image`**: Enables PDF → image → OCR pipeline
+
+## 🐛 Bug Fixes
+
+- Fixed PDF conversion returning "0/1 files converted" for text-based PDFs
+- Fixed Tesseract status not refreshing after installation
+- Fixed eframe glow fallback not working (missing feature flag)
+- Fixed CI workflow feature syntax (quoted feature lists)
+
+## 📦 Downloads
+
+| Edition | Description | OCR | Preview |
+|---------|-------------|-----|---------|
+| **Full** | GUI + OCR + Preview + PDF-to-Image | ocrs + Tesseract | Yes |
+| **Light** | GUI only | No | No |
+| **CLI** | Command-line only | ocrs + Tesseract | No |

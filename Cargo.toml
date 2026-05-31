@@ -1,6 +1,6 @@
 [package]
 name = "mdrust"
-version = "1.5.0"
+version = "2.0.0"
 edition = "2021"
 authors = ["MDrust Contributors"]
 description = "Multi-threaded document-to-markdown converter with OCR, multilingual UI, and MD viewer"
@@ -54,11 +54,21 @@ comrak = { version = "0.29", default-features = false }
 # Image processing (used by OCR and GUI icon)
 image = { version = "0.25", default-features = false, features = ["jpeg", "png"], optional = true }
 
-# OCR — Tesseract CLI subprocess (no compile-time C dependencies)
-# Requires: tesseract binary on PATH at runtime
-# Language data (tessdata) is embedded in the binary via include_bytes!
-# This approach is more portable than FFI bindings — no need for
-# libtesseract-dev / libleptonica-dev / vcpkg at compile time.
+# ── OCR engines ──
+# Built-in OCR: ocrs (pure Rust, always available in Full edition)
+ocrs = { version = "0.12", optional = true }
+rten = { version = "0.24", default-features = false, optional = true }
+
+# PDF rendering to images (for OCR fallback on scanned PDFs)
+pdfium-render = { version = "0.8", optional = true, default-features = false, features = [
+    "pdfium_latest",
+    "image_025",
+    "thread_safe",
+    "sync",
+] }
+
+# HTTP client — for downloading ocrs models and tessdata on demand
+reqwest = { version = "0.12", features = ["blocking", "rustls-tls"], default-features = false }
 
 # File detection
 mime_guess = "2.0"
@@ -91,7 +101,7 @@ open = { version = "5.3", optional = true }
 
 # eframe/egui for GUI
 # Note: enable both "wgpu" and "glow" features so we can fallback from wgpu to glow renderer
-eframe = { version = "0.31", features = ["wgpu"] }
+eframe = { version = "0.31", features = ["wgpu", "glow"] }
 egui = "0.31"
 egui_extras = { version = "0.31", default-features = false, features = ["image"] }
 rfd = "0.15"
@@ -124,12 +134,11 @@ bytecount = "0.6"
 default = ["gui", "ocr", "preview", "simd"]
 gui = ["image", "egui_commonmark"]
 cli-only = []
-ocr = ["image"]
-# tesseract-ffi was removed in v1.5.0 — OCR now uses CLI subprocess exclusively
-# This eliminates compile-time C dependencies (libtesseract-dev, libleptonica-dev, vcpkg)
-# while providing the same functionality at runtime
+ocr = ["image", "dep:ocrs", "dep:rten"]
+# pdf-to-image: render PDF pages to PNG for OCR on scanned documents
+pdf-to-image = ["dep:pdfium-render"]
 preview = ["open", "uuid"]
-full = ["ocr", "preview"]
+full = ["ocr", "preview", "pdf-to-image"]
 light = []
 logs = ["dep:tracing-subscriber"]
 # SIMD acceleration — enables simd-json for faster JSON parsing on x86_64/aarch64

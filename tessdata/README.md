@@ -1,38 +1,29 @@
-# Tesseract Language Data (tessdata)
+# MDrust Tessdata
 
-This directory contains Tesseract OCR language model files (`tessdata_fast`)
-that are embedded into the MDrust binary at compile time via `include_bytes!`.
+This directory contains Tesseract language data files that are used for OCR.
 
-## Included Languages
+**Note:** Starting from v2.0.0, tessdata files are **NOT** embedded in the binary.
+They are downloaded on demand when the user selects a language for OCR.
+
+## Languages Available
 
 | File | Language | Size |
 |------|----------|------|
-| `eng.traineddata` | English | ~4 MB |
+| `eng.traineddata` | English | ~3.9 MB |
 | `rus.traineddata` | Russian | ~3.7 MB |
 | `chi_sim.traineddata` | Simplified Chinese | ~2.4 MB |
 
-## How It Works
+## Download Location
 
-1. At compile time, `src/ocr/mod.rs` includes these files via `include_bytes!`
-2. On first run, MDrust extracts them to the app data directory
-   (`~/.local/share/mdrust/tessdata/` on Linux,
-    `~/Library/Application Support/mdrust/tessdata/` on macOS,
-    `%APPDATA%\mdrust\tessdata\` on Windows)
-3. The Tesseract engine uses these files for text recognition
+Tessdata files are downloaded from the [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast) 
+repository and stored in the MDrust application data directory:
 
-## Requirements
+- **Linux**: `~/.local/share/mdrust/tessdata/`
+- **macOS**: `~/Library/Application Support/mdrust/tessdata/`
+- **Windows**: `%APPDATA%/mdrust/tessdata/`
 
-The tessdata files are embedded, but the **Tesseract OCR engine** itself
-(tesseract CLI binary) must be installed on the system:
+## Built-in OCR
 
-- **Linux (Debian/Ubuntu)**: `sudo apt install tesseract-ocr`
-- **Linux (Fedora)**: `sudo dnf install tesseract`
-- **Linux (Arch)**: `sudo pacman -S tesseract`
-- **macOS**: `brew install tesseract`
-- **Windows**: Download from https://github.com/UB-Mannheim/tesseract/wiki
-  or `choco install tesseract`
-
-## Source
-
-These are standard `tessdata_fast` models from the official Tesseract repository:
-https://github.com/tesseract-ocr/tessdata_fast
+MDrust v2.0.0 includes a built-in OCR engine (ocrs) that supports English 
+text recognition without any external dependencies or downloads. Tesseract 
+is optional and provides support for 100+ additional languages.

@@ -191,6 +191,37 @@ impl MarkItDownApp {
         langs
     }
 
+    /// Install Tesseract — runs in a background thread
+    #[cfg(feature = "ocr")]
+    fn install_tesseract(&mut self) {
+        let tx = self.result_tx.clone();
+        std::thread::spawn(move || {
+            let result = ocr::install_tesseract();
+            match result {
+                Ok(path) => {
+                    tracing::info!("Tesseract installed at: {}", path.display());
+                    let _ = tx.send(ConvertMessage::BatchComplete);
+                }
+                Err(e) => {
+                    tracing::error!("Failed to install Tesseract: {}", e);
+                    let _ = tx.send(ConvertMessage::BatchError(
+                        format!("Tesseract install failed: {}", e)
+                    ));
+                }
+            }
+        });
+        self.notification = Some((
+            "Installing Tesseract...".to_string(),
+            std::time::Instant::now(),
+        ));
+    }
+
+    /// Refresh Tesseract status (e.g. after install)
+    #[cfg(feature = "ocr")]
+    fn refresh_tesseract_status(&mut self) {
+        self.tesseract_status = TesseractStatus::check();
+    }
+
     /// Pump mpsc channels for results — no blocking I/O on UI thread.
     /// Processes all pending messages (not just one) so the progress bar
     /// and preview update smoothly.
@@ -225,6 +256,9 @@ impl MarkItDownApp {
                 ConvertMessage::BatchComplete => {
                     let success_count = self.last_results.len();
                     let total = self.progress_total;
+                    // Refresh Tesseract status in case it was just installed
+                    #[cfg(feature = "ocr")]
+                    self.refresh_tesseract_status();
                     if success_count > 0 {
                         self.state = AppState::Completed;
                         self.notification = Some((
@@ -608,6 +642,22 @@ impl MarkItDownApp {
             ui.checkbox(&mut self.ocr_eng, "English");
             ui.checkbox(&mut self.ocr_rus, "\u{0420}\u{0443}\u{0441}\u{0441}\u{043a}\u{0438}\u{0439}");
             ui.checkbox(&mut self.ocr_chi_sim, "\u{4e2d}\u{6587}");
+
+            // Tesseract install button — show only when not installed
+            if self.tesseract_status == TesseractStatus::NotInstalled {
+                ui.add_space(4.0);
+                let install_label = "\u{1f4e5} Install Tesseract"; // 📥
+                let btn = egui::Button::new(
+                    egui::RichText::new(install_label).small().color(egui::Color32::WHITE))
+                    .fill(Theme::ACCENT.gamma_multiply(0.7))
+                    .min_size(egui::vec2(ui.available_width(), 28.0))
+                    .rounding(6.0);
+                if ui.add(btn).clicked() {
+                    self.install_tesseract();
+                }
+                ui.label(egui::RichText::new("For Russian, Chinese & 100+ languages")
+                    .size(8.0).color(Theme::TEXT_DIM));
+            }
         }
 
         // Primary action — Convert button at bottom
