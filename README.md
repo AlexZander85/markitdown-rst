@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/icon.png" alt="MarkItDown-RST" width="160" height="160" />
+<img src="assets/icon.png" alt="MDrust" width="160" height="160" />
 
-# 🔄 MarkItDown-RST
+# 🔄 MDrust
 
 **Multi-format document-to-Markdown converter — pure Rust**
 
@@ -10,7 +10,7 @@
 
 **多格式文档转 Markdown 转换器 — 纯 Rust**
 
-[![Build Apps](https://github.com/AlexZander85/markitdown-rst/actions/workflows/build.yml/badge.svg)](https://github.com/AlexZander85/markitdown-rst/actions/workflows/build.yml)
+[![Build Apps](https://github.com/AlexZander85/mdrust/actions/workflows/build.yml/badge.svg)](https://github.com/AlexZander85/mdrust/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey.svg)](#-installation)
@@ -29,15 +29,15 @@
 
 ## 🇬🇧 English
 
-### What is MarkItDown-RST?
+### What is MDrust?
 
-**MarkItDown-RST** is a high-performance Rust desktop application that converts 13+ document formats into clean Markdown. It runs **dozens of times faster** than Python alternatives (`markitdown`, `mammoth`, `python-pptx`) thanks to a multithreaded **Tokio + Rayon** architecture, and the built-in **Tesseract OCR** recognizes text in images out of the box — no external dependencies required.
+**MDrust** is a high-performance Rust desktop application that converts 13+ document formats into clean Markdown. It runs **dozens of times faster** than Python alternatives (`markitdown`, `mammoth`, `python-pptx`) thanks to a multithreaded **Tokio + Rayon** architecture, and the built-in **Tesseract OCR** recognizes text in images out of the box — no external dependencies required.
 
 > **Single file. No Python runtime. 20–50 MB RAM instead of 200–500 MB. Instant startup.**
 
-### 🎯 Why MarkItDown-RST?
+### 🎯 Why MDrust?
 
-| Advantage | MarkItDown-RST | Python `markitdown` / alternatives |
+| Advantage | MDrust | Python `markitdown` / alternatives |
 |---|---|---|
 | ⚡ **Speed** | **10–50×** faster | baseline |
 | 💾 **Memory** | 20–50 MB RAM | 200–500 MB RAM |
@@ -134,13 +134,13 @@ Full-featured embedded browser previewer with premium typography:
 **⌨️ CLI (Command Line):**
 
 ```bash
-markitdown-cli convert <file>           # Single file conversion
-markitdown-cli batch <folder>           # Batch conversion with progress bar
-markitdown-cli info <file>              # Document information
-markitdown-cli formats                  # List supported formats
-markitdown-cli ocr-check                # Check Tesseract & tessdata
-markitdown-cli convert doc.pdf --optimize-llm  # LLM-optimized output
-markitdown-cli batch ./docs --ocr-langs eng+rus --threads 8
+mdrust-cli convert <file>           # Single file conversion
+mdrust-cli batch <folder>           # Batch conversion with progress bar
+mdrust-cli info <file>              # Document information
+mdrust-cli formats                  # List supported formats
+mdrust-cli ocr-check                # Check Tesseract & tessdata
+mdrust-cli convert doc.pdf --optimize-llm  # LLM-optimized output
+mdrust-cli batch ./docs --ocr-langs eng+rus --threads 8
 ```
 
 - 🎨 Colored output, progress bars
@@ -170,7 +170,7 @@ Several binary variants — choose the one that fits your needs:
 
 ### 📊 Benchmarks (vs Python `markitdown`)
 
-| Test | Python `markitdown` | **MarkItDown-RST** | Speedup |
+| Test | Python `markitdown` | **MDrust** | Speedup |
 |------|:-------------------:|:------------------:|:-------:|
 | PDF 50 pages | 8.2 s | **1.85 s** | **4.4×** |
 | DOCX 100 KB | 1.4 s | **0.30 s** | **4.7×** |
@@ -179,7 +179,7 @@ Several binary variants — choose the one that fits your needs:
 | Batch 100 files | 142 s | **31 s** | **4.6×** |
 | OCR image (rus+eng) | 4.8 s | **1.65 s** | **2.9×** |
 
-| Memory metric | Python | **MarkItDown-RST** |
+| Memory metric | Python | **MDrust** |
 |---|:---:|:---:|
 | PDF idle | 280 MB | **45 MB** |
 | Batch 100 files | 2.4 GB | **120 MB** |
@@ -192,13 +192,13 @@ Several binary variants — choose the one that fits your needs:
 
 **Option 1: Download pre-built binary** (recommended)
 
-Go to [Releases](https://github.com/AlexZander85/markitdown-rst/releases) or [Actions → Artifacts](https://github.com/AlexZander85/markitdown-rst/actions) and download the binary for your OS (Linux / macOS / Windows).
+Go to [Releases](https://github.com/AlexZander85/mdrust/releases) or [Actions → Artifacts](https://github.com/AlexZander85/mdrust/actions) and download the binary for your OS (Linux / macOS / Windows).
 
 **Option 2: Build from source**
 
 ```bash
-git clone https://github.com/AlexZander85/markitdown-rst.git
-cd markitdown-rst
+git clone https://github.com/AlexZander85/mdrust.git
+cd mdrust
 
 # Full edition (GUI + OCR + Preview) — recommended
 cargo build --release
@@ -209,32 +209,32 @@ cargo build --release --no-default-features --features gui
 # CLI-only edition (no GUI, for servers)
 cargo build --release --no-default-features --features cli-only
 
-# Binary will be at target/release/markitdown-rst
+# Binary will be at target/release/mdrust
 ```
 
 ### 🚀 Quick Start
 
 ```bash
 # Launch GUI
-./markitdown-rst
+./mdrust
 
 # Convert a single file
-markitdown-cli convert document.pdf
+mdrust-cli convert document.pdf
 
 # Batch convert folder with 8 threads
-markitdown-cli batch ./docs --threads 8 --output ./markdown
+mdrust-cli batch ./docs --threads 8 --output ./markdown
 
 # OCR with Russian and English
-markitdown-cli convert scan.png --ocr-langs eng+rus
+mdrust-cli convert scan.png --ocr-langs eng+rus
 
 # LLM-optimized output
-markitdown-cli convert paper.pdf --optimize-llm > prompt.md
+mdrust-cli convert paper.pdf --optimize-llm > prompt.md
 ```
 
 ### 🏗️ Architecture
 
 ```
-markitdown-rst/
+mdrust/
 ├── src/
 │   ├── main.rs           # GUI entry point
 │   ├── bin/cli.rs        # CLI interface (clap)
@@ -330,15 +330,15 @@ cargo test --all-features
 
 ## 🇷🇺 Русский
 
-### Что такое MarkItDown-RST?
+### Что такое MDrust?
 
-**MarkItDown-RST** — это высокопроизводительное десктоп-приложение на Rust, которое конвертирует документы 13+ форматов в чистый Markdown. Работает в десятки раз быстрее Python-аналогов (`markitdown`, `mammoth`, `python-pptx`) благодаря многопоточной архитектуре на **Tokio + Rayon**, а встроенный **Tesseract OCR** распознаёт текст на изображениях прямо из коробки — без внешних зависимостей.
+**MDrust** — это высокопроизводительное десктоп-приложение на Rust, которое конвертирует документы 13+ форматов в чистый Markdown. Работает в десятки раз быстрее Python-аналогов (`markitdown`, `mammoth`, `python-pptx`) благодаря многопоточной архитектуре на **Tokio + Rayon**, а встроенный **Tesseract OCR** распознаёт текст на изображениях прямо из коробки — без внешних зависимостей.
 
 > **Один файл. Никакого Python-рантайма. 20–50 MB RAM вместо 200–500 MB. Запускается мгновенно.**
 
-### 🎯 Почему MarkItDown-RST?
+### 🎯 Почему MDrust?
 
-| Преимущество | MarkItDown-RST | Python `markitdown` / аналоги |
+| Преимущество | MDrust | Python `markitdown` / аналоги |
 |---|---|---|
 | ⚡ **Скорость** | в **10–50×** быстрее | базовая |
 | 💾 **Память** | 20–50 MB RAM | 200–500 MB RAM |
@@ -435,13 +435,13 @@ cargo test --all-features
 **⌨️ CLI (Командная строка):**
 
 ```bash
-markitdown-cli convert <файл>            # Конвертация одного файла
-markitdown-cli batch <папка>             # Пакетная конвертация с прогресс-баром
-markitdown-cli info <файл>               # Информация о документе
-markitdown-cli formats                   # Список поддерживаемых форматов
-markitdown-cli ocr-check                 # Проверка Tesseract и tessdata
-markitdown-cli convert doc.pdf --optimize-llm  # Оптимизация под LLM-промпты
-markitdown-cli batch ./docs --ocr-langs eng+rus --threads 8
+mdrust-cli convert <файл>            # Конвертация одного файла
+mdrust-cli batch <папка>             # Пакетная конвертация с прогресс-баром
+mdrust-cli info <файл>               # Информация о документе
+mdrust-cli formats                   # Список поддерживаемых форматов
+mdrust-cli ocr-check                 # Проверка Tesseract и tessdata
+mdrust-cli convert doc.pdf --optimize-llm  # Оптимизация под LLM-промпты
+mdrust-cli batch ./docs --ocr-langs eng+rus --threads 8
 ```
 
 - 🎨 Цветной вывод, прогресс-бары
@@ -471,7 +471,7 @@ markitdown-cli batch ./docs --ocr-langs eng+rus --threads 8
 
 ### 📊 Бенчмарки (vs Python `markitdown`)
 
-| Тест | Python `markitdown` | **MarkItDown-RST** | Ускорение |
+| Тест | Python `markitdown` | **MDrust** | Ускорение |
 |------|:-------------------:|:------------------:|:---------:|
 | PDF 50 страниц | 8.2 сек | **1.85 сек** | **4.4×** |
 | DOCX 100 KB | 1.4 сек | **0.30 сек** | **4.7×** |
@@ -480,7 +480,7 @@ markitdown-cli batch ./docs --ocr-langs eng+rus --threads 8
 | Batch 100 файлов | 142 сек | **31 сек** | **4.6×** |
 | OCR изображения (rus+eng) | 4.8 сек | **1.65 сек** | **2.9×** |
 
-| Метрика памяти | Python | **MarkItDown-RST** |
+| Метрика памяти | Python | **MDrust** |
 |---|:---:|:---:|
 | PDF idle | 280 MB | **45 MB** |
 | Batch 100 файлов | 2.4 GB | **120 MB** |
@@ -493,13 +493,13 @@ markitdown-cli batch ./docs --ocr-langs eng+rus --threads 8
 
 **Способ 1: Скачать готовый бинарник** (рекомендуется)
 
-Перейдите в [Releases](https://github.com/AlexZander85/markitdown-rst/releases) или [Actions → Artifacts](https://github.com/AlexZander85/markitdown-rst/actions) и скачайте бинарник для вашей ОС (Linux / macOS / Windows).
+Перейдите в [Releases](https://github.com/AlexZander85/mdrust/releases) или [Actions → Artifacts](https://github.com/AlexZander85/mdrust/actions) и скачайте бинарник для вашей ОС (Linux / macOS / Windows).
 
 **Способ 2: Собрать из исходников**
 
 ```bash
-git clone https://github.com/AlexZander85/markitdown-rst.git
-cd markitdown-rst
+git clone https://github.com/AlexZander85/mdrust.git
+cd mdrust
 
 # Full версия (GUI + OCR + Preview) — рекомендуется
 cargo build --release
@@ -510,32 +510,32 @@ cargo build --release --no-default-features --features gui
 # CLI-only версия (без GUI, для серверов)
 cargo build --release --no-default-features --features cli-only
 
-# Бинарник появится в target/release/markitdown-rst
+# Бинарник появится в target/release/mdrust
 ```
 
 ### 🚀 Быстрый старт
 
 ```bash
 # Запуск GUI
-./markitdown-rst
+./mdrust
 
 # Конвертация одного файла
-markitdown-cli convert document.pdf
+mdrust-cli convert document.pdf
 
 # Пакетная конвертация папки в 8 потоков
-markitdown-cli batch ./docs --threads 8 --output ./markdown
+mdrust-cli batch ./docs --threads 8 --output ./markdown
 
 # OCR с русским и английским
-markitdown-cli convert scan.png --ocr-langs eng+rus
+mdrust-cli convert scan.png --ocr-langs eng+rus
 
 # Оптимизация под LLM
-markitdown-cli convert paper.pdf --optimize-llm > prompt.md
+mdrust-cli convert paper.pdf --optimize-llm > prompt.md
 ```
 
 ### 🏗️ Архитектура
 
 ```
-markitdown-rst/
+mdrust/
 ├── src/
 │   ├── main.rs           # Точка входа GUI
 │   ├── bin/cli.rs        # CLI-интерфейс (clap)
@@ -631,15 +631,15 @@ cargo test --all-features
 
 ## 🇨🇳 中文
 
-### MarkItDown-RST 是什么？
+### MDrust 是什么？
 
-**MarkItDown-RST** 是一款高性能 Rust 桌面应用程序，可将 13+ 种文档格式转换为整洁的 Markdown。得益于 **Tokio + Rayon** 多线程架构，其运行速度比 Python 替代方案（`markitdown`、`mammoth`、`python-pptx`）快**数十倍**。内置 **Tesseract OCR** 开箱即用地识别图像中的文字——无需外部依赖。
+**MDrust** 是一款高性能 Rust 桌面应用程序，可将 13+ 种文档格式转换为整洁的 Markdown。得益于 **Tokio + Rayon** 多线程架构，其运行速度比 Python 替代方案（`markitdown`、`mammoth`、`python-pptx`）快**数十倍**。内置 **Tesseract OCR** 开箱即用地识别图像中的文字——无需外部依赖。
 
 > **单个文件。无需 Python 运行时。20–50 MB 内存（而非 200–500 MB）。瞬时启动。**
 
-### 🎯 为什么选择 MarkItDown-RST？
+### 🎯 为什么选择 MDrust？
 
-| 优势 | MarkItDown-RST | Python markitdown / 替代方案 |
+| 优势 | MDrust | Python markitdown / 替代方案 |
 |---|---|---|
 | ⚡ 速度 | 快 10–50 倍 | 基准 |
 | 💾 内存 | 20–50 MB RAM | 200–500 MB RAM |
@@ -736,13 +736,13 @@ cargo test --all-features
 **⌨️ CLI（命令行）：**
 
 ```bash
-markitdown-cli convert <文件>            # 单文件转换
-markitdown-cli batch <文件夹>            # 带进度条的批量转换
-markitdown-cli info <文件>               # 文档信息
-markitdown-cli formats                   # 列出支持的格式
-markitdown-cli ocr-check                 # 检查 Tesseract 和 tessdata
-markitdown-cli convert doc.pdf --optimize-llm  # LLM 优化输出
-markitdown-cli batch ./docs --ocr-langs eng+rus --threads 8
+mdrust-cli convert <文件>            # 单文件转换
+mdrust-cli batch <文件夹>            # 带进度条的批量转换
+mdrust-cli info <文件>               # 文档信息
+mdrust-cli formats                   # 列出支持的格式
+mdrust-cli ocr-check                 # 检查 Tesseract 和 tessdata
+mdrust-cli convert doc.pdf --optimize-llm  # LLM 优化输出
+mdrust-cli batch ./docs --ocr-langs eng+rus --threads 8
 ```
 
 - 🎨 彩色输出、进度条
@@ -772,7 +772,7 @@ markitdown-cli batch ./docs --ocr-langs eng+rus --threads 8
 
 ### 📊 基准测试（对比 Python `markitdown`）
 
-| 测试 | Python markitdown | MarkItDown-RST | 加速比 |
+| 测试 | Python markitdown | MDrust | 加速比 |
 |------|:---:|:---:|:---:|
 | PDF 50 页 | 8.2 秒 | **1.85 秒** | **4.4×** |
 | DOCX 100 KB | 1.4 秒 | **0.30 秒** | **4.7×** |
@@ -781,7 +781,7 @@ markitdown-cli batch ./docs --ocr-langs eng+rus --threads 8
 | 批量 100 个文件 | 142 秒 | **31 秒** | **4.6×** |
 | OCR 图像（rus+eng） | 4.8 秒 | **1.65 秒** | **2.9×** |
 
-| 内存指标 | Python | MarkItDown-RST |
+| 内存指标 | Python | MDrust |
 |---|:---:|:---:|
 | PDF 空闲 | 280 MB | **45 MB** |
 | 批量 100 个文件 | 2.4 GB | **120 MB** |
@@ -794,13 +794,13 @@ markitdown-cli batch ./docs --ocr-langs eng+rus --threads 8
 
 **方式 1：下载预编译二进制**（推荐）
 
-前往 [Releases](https://github.com/AlexZander85/markitdown-rst/releases) 或 [Actions → Artifacts](https://github.com/AlexZander85/markitdown-rst/actions) 下载适合您操作系统的二进制文件（Linux / macOS / Windows）。
+前往 [Releases](https://github.com/AlexZander85/mdrust/releases) 或 [Actions → Artifacts](https://github.com/AlexZander85/mdrust/actions) 下载适合您操作系统的二进制文件（Linux / macOS / Windows）。
 
 **方式 2：从源代码构建**
 
 ```bash
-git clone https://github.com/AlexZander85/markitdown-rst.git
-cd markitdown-rst
+git clone https://github.com/AlexZander85/mdrust.git
+cd mdrust
 
 # Full 版本（GUI + OCR + 预览）——推荐
 cargo build --release
@@ -811,32 +811,32 @@ cargo build --release --no-default-features --features gui
 # CLI-only 版本（无 GUI，服务器用）
 cargo build --release --no-default-features --features cli-only
 
-# 二进制文件位于 target/release/markitdown-rst
+# 二进制文件位于 target/release/mdrust
 ```
 
 ### 🚀 快速开始
 
 ```bash
 # 启动 GUI
-./markitdown-rst
+./mdrust
 
 # 转换单个文件
-markitdown-cli convert document.pdf
+mdrust-cli convert document.pdf
 
 # 用 8 线程批量转换文件夹
-markitdown-cli batch ./docs --threads 8 --output ./markdown
+mdrust-cli batch ./docs --threads 8 --output ./markdown
 
 # 中英文 OCR
-markitdown-cli convert scan.png --ocr-langs eng+chi_sim
+mdrust-cli convert scan.png --ocr-langs eng+chi_sim
 
 # LLM 优化输出
-markitdown-cli convert paper.pdf --optimize-llm > prompt.md
+mdrust-cli convert paper.pdf --optimize-llm > prompt.md
 ```
 
 ### 🏗️ 架构
 
 ```
-markitdown-rst/
+mdrust/
 ├── src/
 │   ├── main.rs           # GUI 入口
 │   ├── bin/cli.rs        # CLI 界面 (clap)

@@ -1,4 +1,4 @@
-//! Internationalization (i18n) support for the MarkItDown-RST GUI application.
+//! Internationalization (i18n) support for the MDrust GUI application.
 //!
 //! Provides translated UI strings in English, Russian, and Chinese.
 
@@ -117,7 +117,7 @@ impl I18n {
 
     /// App title (same in every language).
     pub fn app_title(&self) -> &'static str {
-        "MarkItDown-RST"
+        "MDrust"
     }
 
     /// Subtitle beneath the app title.

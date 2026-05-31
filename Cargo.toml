@@ -1,22 +1,22 @@
 [package]
-name = "markitdown-rst"
+name = "mdrust"
 version = "1.2.0"
 edition = "2021"
-authors = ["MarkItDown-RST Contributors"]
+authors = ["MDrust Contributors"]
 description = "Multi-threaded document-to-markdown converter with OCR, multilingual UI, and MD viewer"
 license = "MIT"
 rust-version = "1.70"
 
 [lib]
-name = "markitdown_rst"
+name = "mdrust"
 path = "src/lib.rs"
 
 [[bin]]
-name = "markitdown-rst"
+name = "mdrust"
 path = "src/main.rs"
 
 [[bin]]
-name = "markitdown-cli"
+name = "mdrust-cli"
 path = "src/bin/cli.rs"
 
 [dependencies]

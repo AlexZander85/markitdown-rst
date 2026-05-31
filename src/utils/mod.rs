@@ -177,7 +177,7 @@ pub fn format_size(bytes: u64) -> String {
 pub fn app_data_dir() -> std::path::PathBuf {
     let dir = dirs::data_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))
-        .join("markitdown-rst");
+        .join("mdrust");
 
     let _ = std::fs::create_dir_all(&dir);
     dir

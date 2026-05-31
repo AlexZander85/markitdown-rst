@@ -1,4 +1,4 @@
-//! Main GUI application for MarkItDown-RST
+//! Main GUI application for MDrust
 //!
 //! Professional dark theme with:
 //! - TopBar with cached icon, title, theme toggle, language selector
@@ -310,7 +310,7 @@ impl MarkItDownApp {
             });
             ui.image(&*icon);
             ui.add_space(6.0);
-            ui.label(egui::RichText::new("MarkItDown-RST").size(16.0).strong());
+            ui.label(egui::RichText::new("MDrust").size(16.0).strong());
             ui.label(egui::RichText::new("\u{00b7} Document to Markdown")
                 .small().color(Theme::TEXT_DIM));
 

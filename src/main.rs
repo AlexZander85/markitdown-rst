@@ -28,7 +28,7 @@ mod win_msgbox {
     }
 }
 
-/// MarkItDown-RST — Multi-threaded Document-to-Markdown Converter
+/// MDrust — Multi-threaded Document-to-Markdown Converter
 fn main() -> eframe::Result<()> {
     // On Windows GUI builds, show panics in a message box instead of silently crashing
     // (without windows_subsystem = "windows", the console disappears instantly on panic)
@@ -37,7 +37,7 @@ fn main() -> eframe::Result<()> {
         std::panic::set_hook(Box::new(|info| {
             let msg = info.to_string();
             eprintln!("PANIC: {msg}");
-            unsafe { win_msgbox::show_error("MarkItDown-RST — Fatal Error", &msg); }
+            unsafe { win_msgbox::show_error("MDrust — Fatal Error", &msg); }
         }));
     }
 
@@ -53,22 +53,22 @@ fn main() -> eframe::Result<()> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() > 1 && (args[1] == "--cli" || args.contains(&"--cli".to_string())) {
         #[cfg(all(feature = "gui", target_os = "windows"))]
-        unsafe { win_msgbox::show_info("MarkItDown-RST", "Use markitdown-cli.exe for command-line mode."); }
+        unsafe { win_msgbox::show_info("MDrust", "Use mdrust-cli.exe for command-line mode."); }
 
         #[cfg(not(all(feature = "gui", target_os = "windows")))]
-        eprintln!("Use markitdown-cli binary for command-line mode.");
+        eprintln!("Use mdrust-cli binary for command-line mode.");
 
         std::process::exit(0);
     }
 
     #[cfg(feature = "gui")]
     {
-        markitdown_rst::gui::run_gui()
+        mdrust::gui::run_gui()
     }
 
     #[cfg(not(feature = "gui"))]
     {
-        eprintln!("GUI not available. Use markitdown-cli for command-line mode.");
+        eprintln!("GUI not available. Use mdrust-cli for command-line mode.");
         std::process::exit(1);
     }
 }

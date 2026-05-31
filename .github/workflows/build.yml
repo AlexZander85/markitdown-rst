@@ -93,15 +93,15 @@ jobs:
       # ── Build ──
       - name: Build GUI binary (Full / Light)
         if: matrix.edition != 'cli-only'
-        run: cargo build --release --bin markitdown-rst --target ${{ matrix.target }} ${{ matrix.features }}
+        run: cargo build --release --bin mdrust --target ${{ matrix.target }} ${{ matrix.features }}
 
       - name: Build CLI binary (CLI-only)
         if: matrix.edition == 'cli-only'
-        run: cargo build --release --bin markitdown-cli --target ${{ matrix.target }} ${{ matrix.features }}
+        run: cargo build --release --bin mdrust-cli --target ${{ matrix.target }} ${{ matrix.features }}
 
       # ── Prepare artifacts ──
-      # GUI:  markitdown-rst-{edition}-{os}-x64[.exe]
-      # CLI:  markitdown-cli-{os}-x64[.exe]  (no edition suffix — one CLI per OS)
+      # GUI:  mdrust-{edition}-{os}-x64[.exe]
+      # CLI:  mdrust-cli-{os}-x64[.exe]  (no edition suffix — one CLI per OS)
       - name: Prepare artifacts (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
@@ -110,15 +110,15 @@ jobs:
           $target = "${{ matrix.target }}"
 
           if ($edition -ne "cli-only") {
-            $src = "target/$target/release/markitdown-rst.exe"
-            $dst = "markitdown-rst-${edition}-windows-x64.exe"
+            $src = "target/$target/release/mdrust.exe"
+            $dst = "mdrust-${edition}-windows-x64.exe"
             Copy-Item $src $dst
             Write-Host "GUI artifact: $dst ($('{0:N0}' -f (Get-Item $dst).Length) bytes)"
           }
 
           if ($edition -eq "cli-only") {
-            $src = "target/$target/release/markitdown-cli.exe"
-            $dst = "markitdown-cli-windows-x64.exe"
+            $src = "target/$target/release/mdrust-cli.exe"
+            $dst = "mdrust-cli-windows-x64.exe"
             Copy-Item $src $dst
             Write-Host "CLI artifact: $dst ($('{0:N0}' -f (Get-Item $dst).Length) bytes)"
           }
@@ -130,15 +130,15 @@ jobs:
           TARGET="${{ matrix.target }}"
 
           if [ "$EDITION" != "cli-only" ]; then
-            cp "target/$TARGET/release/markitdown-rst" "markitdown-rst-${EDITION}-linux-x64"
-            chmod +x "markitdown-rst-${EDITION}-linux-x64"
-            echo "GUI artifact: markitdown-rst-${EDITION}-linux-x64 ($(stat -c%s markitdown-rst-${EDITION}-linux-x64) bytes)"
+            cp "target/$TARGET/release/mdrust" "mdrust-${EDITION}-linux-x64"
+            chmod +x "mdrust-${EDITION}-linux-x64"
+            echo "GUI artifact: mdrust-${EDITION}-linux-x64 ($(stat -c%s mdrust-${EDITION}-linux-x64) bytes)"
           fi
 
           if [ "$EDITION" = "cli-only" ]; then
-            cp "target/$TARGET/release/markitdown-cli" "markitdown-cli-linux-x64"
-            chmod +x "markitdown-cli-linux-x64"
-            echo "CLI artifact: markitdown-cli-linux-x64 ($(stat -c%s markitdown-cli-linux-x64) bytes)"
+            cp "target/$TARGET/release/mdrust-cli" "mdrust-cli-linux-x64"
+            chmod +x "mdrust-cli-linux-x64"
+            echo "CLI artifact: mdrust-cli-linux-x64 ($(stat -c%s mdrust-cli-linux-x64) bytes)"
           fi
 
       - name: Prepare artifacts (macOS)
@@ -148,25 +148,25 @@ jobs:
           TARGET="${{ matrix.target }}"
 
           if [ "$EDITION" != "cli-only" ]; then
-            cp "target/$TARGET/release/markitdown-rst" "markitdown-rst-${EDITION}-macos-x64"
-            chmod +x "markitdown-rst-${EDITION}-macos-x64"
-            echo "GUI artifact: markitdown-rst-${EDITION}-macos-x64 ($(stat -f%z markitdown-rst-${EDITION}-macos-x64) bytes)"
+            cp "target/$TARGET/release/mdrust" "mdrust-${EDITION}-macos-x64"
+            chmod +x "mdrust-${EDITION}-macos-x64"
+            echo "GUI artifact: mdrust-${EDITION}-macos-x64 ($(stat -f%z mdrust-${EDITION}-macos-x64) bytes)"
           fi
 
           if [ "$EDITION" = "cli-only" ]; then
-            cp "target/$TARGET/release/markitdown-cli" "markitdown-cli-macos-x64"
-            chmod +x "markitdown-cli-macos-x64"
-            echo "CLI artifact: markitdown-cli-macos-x64 ($(stat -f%z markitdown-cli-macos-x64) bytes)"
+            cp "target/$TARGET/release/mdrust-cli" "mdrust-cli-macos-x64"
+            chmod +x "mdrust-cli-macos-x64"
+            echo "CLI artifact: mdrust-cli-macos-x64 ($(stat -f%z mdrust-cli-macos-x64) bytes)"
           fi
 
       # ── Upload ──
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: markitdown-${{ matrix.edition }}-${{ matrix.target }}
+          name: mdrust-${{ matrix.edition }}-${{ matrix.target }}
           path: |
-            markitdown-rst-*
-            markitdown-cli-*
+            mdrust-*
+            mdrust-cli-*
 
   release:
     name: Create GitHub Release
@@ -191,7 +191,7 @@ jobs:
           cd artifacts
 
           # Create .tar.gz for Linux binaries
-          for f in markitdown-rst-*-linux-x64 markitdown-cli-linux-x64; do
+          for f in mdrust-*-linux-x64 mdrust-cli-linux-x64; do
             if [ -f "$f" ]; then
               tar czf "../release-assets/${f}.tar.gz" "$f"
               echo "Packaged: ${f}.tar.gz"
@@ -199,7 +199,7 @@ jobs:
           done
 
           # Copy Windows .exe as-is
-          for f in markitdown-rst-*-windows-x64.exe markitdown-cli-windows-x64.exe; do
+          for f in mdrust-*-windows-x64.exe mdrust-cli-windows-x64.exe; do
             if [ -f "$f" ]; then
               cp "$f" "../release-assets/$f"
               echo "Copied: $f"
@@ -207,7 +207,7 @@ jobs:
           done
 
           # Create .tar.gz for macOS binaries
-          for f in markitdown-rst-*-macos-x64 markitdown-cli-macos-x64; do
+          for f in mdrust-*-macos-x64 mdrust-cli-macos-x64; do
             if [ -f "$f" ]; then
               tar czf "../release-assets/${f}.tar.gz" "$f"
               echo "Packaged: ${f}.tar.gz"

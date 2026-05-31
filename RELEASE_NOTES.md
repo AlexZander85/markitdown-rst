@@ -1,4 +1,4 @@
-## MarkItDown-RST v1.2.0 — Major GUI Fixes, Real Fonts & Performance Optimizations
+## MDrust v1.2.0 — Major GUI Fixes, Real Fonts & Performance Optimizations
 
 This release focuses on fixing critical GUI bugs, adding real embedded fonts with CJK support, and introducing performance optimizations.
 
@@ -9,6 +9,8 @@ This release focuses on fixing critical GUI bugs, adding real embedded fonts wit
 - **Fixed `Rendered` preview tab showing same as `Raw`** — both tabs displayed monospace text. Now the `Rendered` tab uses `egui_commonmark` for real Markdown rendering inside the GUI.
 - **Fixed `rt.block_on()` blocking UI thread** — `save_all()` was called synchronously inside `pump_channels`, freezing the UI during file saves. Now runs in a background thread.
 - **Fixed `Runtime::new().unwrap()`** — replaced with `.expect("failed to create tokio runtime")` for better panic diagnostics.
+- **Fixed Windows console window** — added `#![windows_subsystem = "windows"]` for GUI builds, no more terminal window on launch.
+- **Fixed Windows crash on startup** — added panic handler with `MessageBoxW` so errors are shown in a dialog instead of silently crashing.
 
 ### New Features
 
@@ -27,32 +29,32 @@ This release focuses on fixing critical GUI bugs, adding real embedded fonts wit
 
 | File | Edition | OS | Arch |
 |------|---------|----|------|
-| `markitdown-rst-full-linux-x64.tar.gz` | Full (GUI + OCR + Preview) | Linux | x86_64 |
-| `markitdown-rst-full-macos-x64.tar.gz` | Full | macOS | x86_64 |
-| `markitdown-rst-full-windows-x64.exe` | Full | Windows | x86_64 |
-| `markitdown-rst-light-linux-x64.tar.gz` | Light (GUI, no OCR) | Linux | x86_64 |
-| `markitdown-rst-light-macos-x64.tar.gz` | Light | macOS | x86_64 |
-| `markitdown-rst-light-windows-x64.exe` | Light | Windows | x86_64 |
-| `markitdown-cli-linux-x64.tar.gz` | CLI-only (OCR) | Linux | x86_64 |
-| `markitdown-cli-macos-x64.tar.gz` | CLI-only | macOS | x86_64 |
-| `markitdown-cli-windows-x64.exe` | CLI-only | Windows | x86_64 |
+| `mdrust-full-linux-x64.tar.gz` | Full (GUI + OCR + Preview) | Linux | x86_64 |
+| `mdrust-full-macos-x64.tar.gz` | Full | macOS | x86_64 |
+| `mdrust-full-windows-x64.exe` | Full | Windows | x86_64 |
+| `mdrust-light-linux-x64.tar.gz` | Light (GUI, no OCR) | Linux | x86_64 |
+| `mdrust-light-macos-x64.tar.gz` | Light | macOS | x86_64 |
+| `mdrust-light-windows-x64.exe` | Light | Windows | x86_64 |
+| `mdrust-cli-linux-x64.tar.gz` | CLI-only (OCR) | Linux | x86_64 |
+| `mdrust-cli-macos-x64.tar.gz` | CLI-only | macOS | x86_64 |
+| `mdrust-cli-windows-x64.exe` | CLI-only | Windows | x86_64 |
 
 ### Quick Start
 
 ```bash
 # GUI mode
-./markitdown-rst
+./mdrust
 
 # CLI: single file
-markitdown-cli convert document.pdf
+mdrust-cli convert document.pdf
 
 # CLI: batch with 8 threads
-markitdown-cli batch ./docs --threads 8 --output ./markdown
+mdrust-cli batch ./docs --threads 8 --output ./markdown
 
 # CLI: OCR with Russian + English
-markitdown-cli convert scan.png --ocr-langs eng+rus
+mdrust-cli convert scan.png --ocr-langs eng+rus
 ```
 
 ---
 
-**Full Changelog**: https://github.com/AlexZander85/markitdown-rst/compare/v1.1.0...v1.2.0
+**Full Changelog**: https://github.com/AlexZander85/MDrust/compare/v1.1.0...v1.2.0

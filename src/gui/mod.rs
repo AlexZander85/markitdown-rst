@@ -47,7 +47,7 @@ pub fn run_gui() -> eframe::Result<()> {
     };
 
     eframe::run_native(
-        "MarkItDown-RST",
+        "MDrust",
         options,
         Box::new(|cc| {
             crate::gui::theme::Theme::apply(&cc.egui_ctx, true);
