@@ -17,19 +17,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # ── Full edition (GUI + OCR + Preview + Tesseract FFI) ──
+          # ── Full edition (GUI + OCR + Preview) ──
+          # OCR uses tesseract CLI subprocess — no compile-time C deps needed
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             edition: full
-            features: "--features tesseract-ffi"
+            features: "--features ocr,preview,simd"
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             edition: full
-            features: "--features tesseract-ffi"
+            features: "--features ocr,preview,simd"
           - os: macos-latest
-            target: x86_64-apple-darwin
+            target: aarch64-apple-darwin
             edition: full
-            features: "--features tesseract-ffi"
+            features: "--features ocr,preview,simd"
           # ── Light edition (GUI, no OCR, no Preview, with SIMD) ──
           - os: windows-latest
             target: x86_64-pc-windows-msvc
@@ -40,22 +41,22 @@ jobs:
             edition: light
             features: "--no-default-features --features gui,simd"
           - os: macos-latest
-            target: x86_64-apple-darwin
+            target: aarch64-apple-darwin
             edition: light
             features: "--no-default-features --features gui,simd"
-          # ── CLI-only edition (no GUI, with OCR FFI + SIMD) ──
+          # ── CLI-only edition (no GUI, with OCR + SIMD) ──
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             edition: cli-only
-            features: "--no-default-features --features cli-only,ocr,simd,tesseract-ffi"
+            features: "--no-default-features --features cli-only,ocr,simd"
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             edition: cli-only
-            features: "--no-default-features --features cli-only,ocr,simd,tesseract-ffi"
+            features: "--no-default-features --features cli-only,ocr,simd"
           - os: macos-latest
-            target: x86_64-apple-darwin
+            target: aarch64-apple-darwin
             edition: cli-only
-            features: "--no-default-features --features cli-only,ocr,simd,tesseract-ffi"
+            features: "--no-default-features --features cli-only,ocr,simd"
 
     steps:
       - uses: actions/checkout@v4
@@ -68,12 +69,7 @@ jobs:
             libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
             libx11-dev libx11-xcb-dev libxrandr-dev libxi-dev libxcursor-dev \
             libxdamage-dev libxfixes-dev libxinerama-dev libwayland-dev \
-            libgbm-dev libegl-dev libclang-dev libspeechd-dev \
-            libtesseract-dev libleptonica-dev
-
-      - name: Install macOS dependencies
-        if: matrix.os == 'macos-latest'
-        run: brew install tesseract leptonica pkg-config
+            libgbm-dev libegl-dev libspeechd-dev
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -148,15 +144,15 @@ jobs:
           TARGET="${{ matrix.target }}"
 
           if [ "$EDITION" != "cli-only" ]; then
-            cp "target/$TARGET/release/mdrust" "mdrust-${EDITION}-macos-x64"
-            chmod +x "mdrust-${EDITION}-macos-x64"
-            echo "GUI artifact: mdrust-${EDITION}-macos-x64 ($(stat -f%z mdrust-${EDITION}-macos-x64) bytes)"
+            cp "target/$TARGET/release/mdrust" "mdrust-${EDITION}-macos-arm64"
+            chmod +x "mdrust-${EDITION}-macos-arm64"
+            echo "GUI artifact: mdrust-${EDITION}-macos-arm64 ($(stat -f%z mdrust-${EDITION}-macos-arm64) bytes)"
           fi
 
           if [ "$EDITION" = "cli-only" ]; then
-            cp "target/$TARGET/release/mdrust-cli" "mdrust-cli-macos-x64"
-            chmod +x "mdrust-cli-macos-x64"
-            echo "CLI artifact: mdrust-cli-macos-x64 ($(stat -f%z mdrust-cli-macos-x64) bytes)"
+            cp "target/$TARGET/release/mdrust-cli" "mdrust-cli-macos-arm64"
+            chmod +x "mdrust-cli-macos-arm64"
+            echo "CLI artifact: mdrust-cli-macos-arm64 ($(stat -f%z mdrust-cli-macos-arm64) bytes)"
           fi
 
       # ── Upload ──
@@ -207,7 +203,7 @@ jobs:
           done
 
           # Create .tar.gz for macOS binaries
-          for f in mdrust-*-macos-x64 mdrust-cli-macos-x64; do
+          for f in mdrust-*-macos-arm64 mdrust-cli-macos-arm64; do
             if [ -f "$f" ]; then
               tar czf "../release-assets/${f}.tar.gz" "$f"
               echo "Packaged: ${f}.tar.gz"

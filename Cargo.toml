@@ -1,6 +1,6 @@
 [package]
 name = "mdrust"
-version = "1.4.1"
+version = "1.5.0"
 edition = "2021"
 authors = ["MDrust Contributors"]
 description = "Multi-threaded document-to-markdown converter with OCR, multilingual UI, and MD viewer"
@@ -54,11 +54,11 @@ comrak = { version = "0.29", default-features = false }
 # Image processing (used by OCR and GUI icon)
 image = { version = "0.25", default-features = false, features = ["jpeg", "png"], optional = true }
 
-# OCR — Tesseract FFI bindings (links to libtesseract at compile time)
-# Requires: libtesseract-dev, libleptonica-dev, pkg-config
-# If unavailable, falls back to CLI subprocess at runtime
-# Enable with: --features tesseract-ffi
-tesseract = { version = "0.15", optional = true }
+# OCR — Tesseract CLI subprocess (no compile-time C dependencies)
+# Requires: tesseract binary on PATH at runtime
+# Language data (tessdata) is embedded in the binary via include_bytes!
+# This approach is more portable than FFI bindings — no need for
+# libtesseract-dev / libleptonica-dev / vcpkg at compile time.
 
 # File detection
 mime_guess = "2.0"
@@ -125,9 +125,9 @@ default = ["gui", "ocr", "preview", "simd"]
 gui = ["image", "egui_commonmark"]
 cli-only = []
 ocr = ["image"]
-# Tesseract FFI — direct libtesseract bindings (requires libtesseract-dev + libleptonica-dev)
-# When disabled, OCR uses CLI subprocess instead (requires tesseract binary on PATH)
-tesseract-ffi = ["dep:tesseract"]
+# tesseract-ffi was removed in v1.5.0 — OCR now uses CLI subprocess exclusively
+# This eliminates compile-time C dependencies (libtesseract-dev, libleptonica-dev, vcpkg)
+# while providing the same functionality at runtime
 preview = ["open", "uuid"]
 full = ["ocr", "preview"]
 light = []
